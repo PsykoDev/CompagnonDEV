@@ -1,0 +1,27 @@
+{
+  "1": {
+    "fr": "Lauriers de bronze",
+    "en": "Bronze Laurel",
+    "ger": "Bronzelorbeere"
+  },
+  "2": {
+    "fr": "Lauriers d'argent",
+    "en": "Silver Laurel",
+    "ger": "Silberlorbeere"
+  },
+  "5": {
+    "fr": "Lauriers de champion",
+    "en": "Champion Laurel",
+    "ger": "Meisterlorbeere"
+  },
+  "4": {
+    "fr": "Lauriers de diamant",
+    "en": "Diamond Laurel",
+    "ger": "Diamantlorbeere"
+  },
+  "3": {
+    "fr": "Lauriers d'or",
+    "en": "Gold Laurel",
+    "ger": "Goldlorbeere"
+  }
+}

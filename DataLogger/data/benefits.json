@@ -1,0 +1,432 @@
+{
+  "10077": {
+    "fr": "Obtention : 250 Tikat<BR>Potion de chasse (1 heure) : disponible<BR>Acompte : 2 %<BR>Frais de courtage :10 %<BR>Nombre d'inscriptions à la salle des ventes : 50<BR>Négociation de prix du courtier : disponible<BR>Récompense : réduction du temps de rechargement des instances, augmentation du nombre d'accès<BR>Augmentation de la quantité maximale et de la vitesse de rechargement pour l'or du vécu<BR>Système de novice d'instance activé<BR>Potion de chasse et potion de chasse PE activées<BR>PEX d'équipement accrus<BR>Accès premium possible",
+    "en": "100% XP Boost (1 Hour) access<BR>Earnest Money: 2%<BR>Trading brokerage fee: 10%<BR>Brokerage Registration Number: 50<BR>Broker's price negotiation: Available<BR>Reward: receive Valkyon's Response when using instance matching system between servers.<BR>Decrease cooldown of instance & increase instance entries<BR>Increases maximum number and charging speed of Adventure Coin<BR>Apply Instance Beginner System<BR>Apply XP Boost and EP Boost<BR>Increased Item XP gains<BR>Doubles access to Ghillieglade.",
+    "ger": "Erhalt: 250 Tikat<BR>Trank der Jagd (1 Std.): verfügbar<BR>Kommission: 2%<BR>Handelsgebühr: 10%<BR>Handelsregistrierungsanzahl: 50<BR>Preisverhandlung des Handelsagenten: verfügbar<BR>Belohnung: verkürzte Instanz-Abklingzeit, erhöhte Eintrittsanzahl<BR>Erhöhte max. Erlebnisgold-Menge und Aufladegeschwindigkeit<BR>Instanzneulingssystem aktiv<BR>Trank der Jagd und EL-Trank der Jagd aktiv<BR>Erhöhtes Ausrüstungsgeschick<BR>Premium-Eintritt möglich"
+  },
+  "10335": {
+    "fr": "",
+    "en": "Monthly Account Rewards:<BR>Permanent 100% XP Boost.<BR>Permanent 100% Reputation Boost.<BR>Permanent 100% Quester's Gold Boost.<BR>Village Atlas.<BR>Travel Journal.<BR>Two Valkyon's Responses from Instance Matching.<BR>Twice as many available daily quests.<BR>Instance access twice as often.<BR>Up to 50 items active on brokerage.<BR>Exempt from earnest money requirements on brokerage.<BR>Brokerage fee of only 10%.<BR>Sampler mount (changes periodically).<BR>Daily boosts and loot boxes.",
+    "ger": ""
+  },
+  "334": {
+    "fr": "Fondateur",
+    "en": "Founder",
+    "ger": "Gründer{@g:/in}"
+  },
+  "806": {
+    "fr": "User ELITE (Major)",
+    "en": "User ELITE (Major)",
+    "ger": "User ELITE (Major)"
+  },
+  "1000": {
+    "fr": "Cybercafé TERA",
+    "en": "TERA PC cafe",
+    "ger": "TERA-Internetcafé"
+  },
+  "100600": {
+    "fr": "Poste, hôtel des ventes, échange entre utilisateurs, match à mort et entrepôt de guilde",
+    "en": "Mail, Brokerage, Trade, Deathmatch, Guild Bank",
+    "ger": "Post, Handelsagentur, Handel zwischen Usern, Deathmatch und Gildenlager"
+  },
+  "11000": {
+    "fr": "Nombre d'inscriptions à la salle des ventes : 50<BR>Négociation de prix du courtier : disponible<BR>Les chances de succès de fabrication critique augmentent de 10 %<BR>Inventaire de cybercafé : disponible<BR>Obtenir 100 % de PEX en plus<BR>Les PE-PEX augmentent de 10 %<BR>Réduction du temps de fabrication",
+    "en": "Brokerage Registration Number: 50<BR>Broker's price negotiation: available<BR>Increases critical success chance by 10% on crafting items<BR>PC cafe inventory: available<BR>Acquire 100% additional experience<BR>Gain 100% additional hunting XP rewards<BR>Gain 10% additional EP XP rewards<BR>Significantly decreases crafting time.",
+    "ger": "Handelsregistrierungsanzahl: 50<BR>Preisverhandlung des Handelsagenten: verfügbar<BR>Erhöht die Chance auf einen kritischen Erfolg in der Herstellung um 10%<BR>Internetcafé-Inventar: verfügbar<BR>100% zusätzliche Erfahrung erhalten<BR>EL-EP um 10% erhöht<BR>Herstellungszeit wird verringert"
+  },
+  "100104": {
+    "fr": "",
+    "en": "JP Tooltip",
+    "ger": ""
+  },
+  "35": {
+    "fr": "+30 PE-PEX",
+    "en": "EP XP increases by 30",
+    "ger": "+30 EL-EP"
+  },
+  "436": {
+    "fr": "Avantage du pack II",
+    "en": "Package Benefit II",
+    "ger": "Paketvorteil II"
+  },
+  "691": {
+    "fr": "Mode sans échec",
+    "en": "Safe Mode",
+    "ger": "Abgesicherter Modus"
+  },
+  "100103": {
+    "fr": "Avantages d'utilisateur existant (Japon)",
+    "en": "Japan Returning user benefit",
+    "ger": "Wiederkehrender Spieler (Japan) Vorteil"
+  },
+  "1077777777": {
+    "fr": "<font color = '#ABF200'>{EventType}</font> <font color = '#FFBB00'>{EventValue}</font>{RegionList}",
+    "en": "<font color = '#ABF200'>{EventType}</font> <font color = '#FFBB00'>{EventValue}</font>{RegionList}",
+    "ger": "<font color = '#ABF200'>{EventType}</font> <font color = '#FFBB00'>{EventValue}</font>{RegionList}"
+  },
+  "100335": {
+    "fr": "",
+    "en": "Package Benefit",
+    "ger": ""
+  },
+  "10435": {
+    "fr": "Récompenses de compte permanentes : <BR>8 personnages par serveur<BR>4 onglets de stockage par serveur",
+    "en": "Permanent Account Rewards: <BR>8 characters available per server.<BR>4 bank tabs per server.",
+    "ger": "Dauerhafte Belohnungen auf dem Konto:<BR>8 Charaktere pro Server<BR>4 Bankreiter pro Server"
+  },
+  "1288888888": {
+    "fr": "Confirmer",
+    "en": "Confirm",
+    "ger": "Bestätigen"
+  },
+  "10433": {
+    "fr": "Bonus activés pendant l'adhésion :<BR>Temps de rechargement des instances réduit de moitié et nombre d'accès doublé<BR>Quantité maximum accrue et régénération accélérée pour l'or du vécu<BR>Monture spéciale et familier<BR>Téléportation libre vers les villes et villages ainsi que vers les emplacements de téléportation personnels<BR>De nombreux bonus comme 100 % d'augmentation des PEX de personnages<BR>Clés et parchemins d'invocation de PNJ<BR>Jusqu'à 50 offres actives à l'Hôtel des ventes<BR>Réduction des acomptes et frais d'achat immédiat à l'Hôtel des ventes<BR>Lien de cristal permanent<BR>Possibilité de livraison quotidienne supplémentaire auprès des PNJ de pêches<BR>Deux fois plus de quêtes journalières disponibles<BR>+50 % de PEX de finesse de compétence<BR>+100 % de PE-PEX<BR>... Et bien plus encore !",
+    "en": "Active Bonuses During Membership:<BR>Instance cooldowns halved and entries doubled<BR>Increased maximum and faster regeneration of Adventure Coins<BR>Special mount and pet<BR>Free teleportation to cities, towns and villages plus your own teleport locations<BR>Various boosts such as 100% increased character experience<BR>NPC summoning scrolls and keys<BR>Up to 50 active offers on the brokerage<BR>Reduced earnest money and instant buy fees from the brokerage<BR>Permanent crystalbind<BR>Additional daily deliveries to fishing NPCs<BR>Twice as many daily quests<BR>+50% skill advancement XP<BR>+100% EP XP<BR>... and much more!",
+    "ger": "Aktive Boni während der Mitgliedschaft:<BR>Abklingzeit von Instanzen halbiert und Zutritte verdoppelt<BR>Erhöhtes Maximum und schnellere Regeneration von Erlebnisgold<BR>Besonderes Reittier und Begleiter<BR>Freie Teleportation zu Städten und Dörfern sowie eigenen Teleportpunkten<BR>Zahlreiche Boosts wie 100% erhöhte Charakter-Erfahrung<BR>NPC-Beschwörungsrollen und Schlüssel<BR>Bis zu 50 aktive Angebote bei der Handelsagentur<BR>Reduzierte Kommissionszahlungen und Sofortkauf-Gebühren bei der Handelsagentur<BR>Permanente Kristallbindung<BR>Zusätzliche tägliche Lieferungen an Angel-NPCs möglich<BR>Doppelte Anzahl der verfügbaren Tagesquests<BR>+50% Fertigkeitsfinesse-EP<BR>+100% EL-EP<BR>... und vieles mehr!"
+  },
+  "434": {
+    "fr": "Vétéran",
+    "en": "Veteran",
+    "ger": "Veteran"
+  },
+  "804": {
+    "fr": "User ELITE (Minor)",
+    "en": "User ELITE (Minor)",
+    "ger": "User ELITE (Minor)"
+  },
+  "10333": {
+    "fr": "Récompenses de compte mensuelles :<BR>Potion puissante de chasse permanente.<BR>Potion puissante de notoriété permanente.<BR>Potion puissante de l'aventurier permanente.<BR>Guide du voyageur.<BR>Parchemins d'assurance du voyageur.<BR>Deux réponses de Valkyon issues de la recherche d'instances.<BR>Deux fois plus de quêtes journalières.<BR>Fréquence d'accès aux instances doublée.<BR>Jusqu'à 50 objets actifs dans l'hôtel des ventes.<BR>exempté d'acompte à la salle de ventes<BR>Frais de courtage de seulement 10%<BR>Modèle de monture (change à intervalles réguliers).<BR>Des bonus et boîtes à malice quotidiens.",
+    "en": "Monthly Account Rewards:<BR>Permanent 100% XP Boost.<BR>Permanent 100% Reputation Boost.<BR>Permanent 100% Quester's Gold Boost.<BR>Village Atlas.<BR>Travel Journal.<BR>Two Valkyon's Responses from Instance Matching.<BR>Twice as many available daily quests.<BR>Instance access twice as often.<BR>Up to 50 items active on brokerage.<BR>Exempt from earnest money requirements on brokerage.<BR>Brokerage fee of only 10%.<BR>Sampler mount (changes periodically).<BR>Daily boosts and loot boxes.",
+    "ger": "Monatliche Belohnungen auf dem Konto:<BR>Permanenter Mächtiger Trank der Jagd.<BR>Permanenter Mächtiger Tee mit Ruhm.<BR>Permanenter Mächtiger Abenteurertrank.<BR>Handbuch des Reisenden: Dorfreisen.<BR>2x Valkyons Belohnung, wenn Ihr die Instanzgruppensuche verwendet.<BR>Doppelte Anzahl der verfügbaren Tagesquests.<BR>Doppelte Anzahl der Instanzzutritte.<BR>Bis zu 50 aktive Angebote bei der Handelsagentur.<BR>Befreiung von Kommissionszahlungen bei der Handelsagentur.<BR>Handelsgebühr von nur 10%.<BR>Probereittier (ändert sich regelmäßig).<BR>Täglich neue Stärkungen und Beutekisten."
+  },
+  "100434": {
+    "fr": "Avantage du paquet",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  },
+  "10334": {
+    "fr": "Récompenses de compte permanentes : <BR>8 emplacements de personnage gratuits par serveur.<BR>4 onglets de stockage disponibles par serveur.<BR>Terminus, le destrier argon hybride.<BR>Titre \"Le fondateur\".<BR>Jusqu'à 30 objets actifs à la salle des ventes",
+    "en": "Permanent Account Rewards: <BR>8 free character slots per server.<BR>4 bank tabs per server.<BR>Terminus, the argon hybrid warhorse.<BR>\"Founder\" title.<BR>Up to 30 items active on brokerage.",
+    "ger": "Dauerhafte Belohnungen auf dem Account:<BR>8 freie Charakterplätze pro Server.<BR>4 Bankfächer pro Server.<BR>Terminus, die argonische Schlachtrosskreuzung.<BR>Titel \"Gründer/in\".<BR>Bis zu 30 aktive Angebote bei der Handelsagentur."
+  },
+  "1000602": {
+    "fr": "Afin d'éviter les abus, ce compte ne peut pas échanger d'or ou d'objets.",
+    "en": "In order to prevent account theft, trading items or gold is restricted.",
+    "ger": "Um einem Missbrauch vorzubeugen, kann dieser Account nicht mit Gold oder Gegenständen handeln."
+  },
+  "10434": {
+    "fr": "Récompenses de compte permanent : <BR>8 personnages disponibles par serveur.<BR>4 onglets de stockage disponibles par serveur.<BR>Titre \"Vétéran de la Fédération Valkyon\".<BR>Jusqu'à 30 objets actifs à la salle des ventes",
+    "en": "Permanent Account Rewards: <BR>8 characters available per server.<BR>4 bank tabs per server.<BR>\"Veteran of the Valkyon Federation\" title.<BR>Up to 30 items active on brokerage.",
+    "ger": "Dauerhafte Belohnungen auf dem Konto:<BR>8 Charaktere pro Server.<BR>4 Bankreiter pro Server.<BR>Titel \"Veteran/in der Valkyon-Föderation\".<BR>Bis zu 30 aktive Angebote bei der Handelsagentur."
+  },
+  "100436": {
+    "fr": "Avantage du pack",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  },
+  "10031": {
+    "fr": "Récompense : vous recevez 2 réponses de Valkyon lorsque la recherche d'instances est utilisée.",
+    "en": "Reward: receive two Valkyon's Response when using instance matching.",
+    "ger": "Belohnung: 2x Valkyons Belohnung, wenn Ihr die Instanzgruppensuche verwendet."
+  },
+  "333": {
+    "fr": "Statut élite",
+    "en": "Elite Status",
+    "ger": "Elitestatus"
+  },
+  "701": {
+    "fr": "VIP",
+    "en": "VIP",
+    "ger": "VIP"
+  },
+  "10436": {
+    "fr": "Récompenses de compte permanentes : <BR>10 personnages par serveur<BR>5 onglets de stockage par serveur",
+    "en": "Permanent Account Rewards: <BR>10 characters available per server.<BR>5 bank tabs per server.",
+    "ger": "Dauerhafte Belohnungen auf dem Konto:<BR>10 Charaktere pro Server<BR>5 Bankreiter pro Server"
+  },
+  "807": {
+    "fr": "User ELITE (VIP)",
+    "en": "User ELITE (VIP)",
+    "ger": "User ELITE (VIP)"
+  },
+  "100033": {
+    "fr": "Avantage du paquet",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  },
+  "100350": {
+    "fr": "Vous bénéficiez d'un effet de points d'expériences doublés.",
+    "en": "You are under the effect of double experience points.",
+    "ger": "Ihr erhaltet doppelte Erfahrungspunkte."
+  },
+  "1000600": {
+    "fr": "La date de la dernière connexion étant assez lointaine, l'utilisation du compte est restreinte pour les fonctions suivantes, afin de prévenir d'éventuels abus.",
+    "en": "In order to prevent account theft, trading is restricted to inactive accounts.",
+    "ger": "Da der letzte Login längere Zeit her ist, wurde dieser Account in einigen Funktionen beschränkt, um einem Account-Missbrauch vorzubeugen."
+  },
+  "1000601": {
+    "fr": "Pour éviter les abus, ce compte ne peut pas échanger d'or ou d'objets.",
+    "en": "In order to prevent account theft, trading items or gold is restricted.",
+    "ger": "Um einem Missbrauch vorzubeugen, kann dieser Account nicht mit Gold oder Gegenständen handeln."
+  },
+  "1188888888": {
+    "fr": "Obtenir",
+    "en": "Claim",
+    "ger": "Erhalten"
+  },
+  "10104": {
+    "fr": "",
+    "en": "JP Tooltip",
+    "ger": ""
+  },
+  "10103": {
+    "fr": "Infobulle d'utilisateur existant (Japon)",
+    "en": "Japan Returning user tooltip",
+    "ger": "Wiederkehrender Spieler (Japan) Tooltip"
+  },
+  "100433": {
+    "fr": "Avantage du paquet",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  },
+  "500": {
+    "fr": "VIP",
+    "en": "VIP",
+    "ger": "VIP"
+  },
+  "10600": {
+    "fr": "L'utilisation du compte est restreinte pour certaines fonctions, afin de prévenir d'éventuels abus. <br>Une vérification permet de lever la restriction.",
+    "en": "In order to prevent account theft, trading items or gold to inactive accounts is restricted.<br>Press the icon and verify your account to enable trading.",
+    "ger": "Dieser Account wurde in einigen Funktionen beschränkt, um einem Account-Missbrauch vorzubeugen. <br>Durch Verifizierung kann die Beschränkung entfernt werden."
+  },
+  "100070": {
+    "fr": "",
+    "en": "Package Benefit",
+    "ger": ""
+  },
+  "77": {
+    "fr": "Forfait mensuel",
+    "en": "Monthly Pass",
+    "ger": "Monatspass"
+  },
+  "101000": {
+    "fr": "Avantage du paquet",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  },
+  "10033": {
+    "fr": "Acompte : exempté<BR>Frais de courtage : 5 %<BR>Nombre d'inscriptions à la salle des ventes : 50<BR>Négociation de prix du courtier : disponible<BR>Récompense : réduction du temps de rechargement des instances, augmentation du nombre d'accès<BR>Augmentation de la quantité maximale et de la vitesse de rechargement pour l'or du vécu<BR>Système de novice d'instance activé<BR>Potion de chasse et de notoriété activées<BR>Accès premium possible",
+    "en": "Earnest Money: exemption<BR>Trading brokerage fee: 5%<BR>Brokerage Registration Number: 50<BR>Broker's price negotiation: Available<BR>Reward: receive Valkyon's Response when using instance matching system between servers.<BR>Decrease cooldown of instance & increase instance entries<BR>Increases maximum number and charging speed of Adventure Coin<BR>Apply Instance Beginner System<BR>Apply XP Boost and Reputation Boost<BR>Doubles access to Ghillieglade.",
+    "ger": "Kommission: keine<BR>Handelsgebühr: 5%<BR>Handelsregistrierungsanzahl: 50<BR>Preisverhandlung des Handelsagenten: verfügbar<BR>Belohnung: verkürzte Instanz-Abklingzeit, erhöhte Eintrittsanzahl<BR>Erhöhte max. Erlebnisgold-Menge und Aufladegeschwindigkeit<BR>Instanzneulingssystem aktiv<BR>Trank der Jagd und Tee mit Ruhm aktiv<BR>Premium-Eintritt möglich"
+  },
+  "88888888": {
+    "fr": "Évènement (durée totale)",
+    "en": "Play Time Event",
+    "ger": "Event (Gesamtzeit)"
+  },
+  "33": {
+    "fr": "VIP",
+    "en": "TERA Rewards",
+    "ger": "VIP"
+  },
+  "10035": {
+    "fr": "Les PE-PEX augmentent de 30 %.",
+    "en": "EP XP increases by 30%.",
+    "ger": "Erhöht die EL-EP um 30%."
+  },
+  "800": {
+    "fr": "PC Café (Minor)",
+    "en": "PC Café (Minor)",
+    "ger": "PC Café (Minor)"
+  },
+  "601": {
+    "fr": "Pack de base",
+    "en": "Basic Package",
+    "ger": "Basispaket"
+  },
+  "10032": {
+    "fr": "Diminue le temps de recharge des instances de moitié et permet d'y avoir accès deux fois plus souvent.",
+    "en": "Decrease cooldown of instance in half & increase instance entries by 100%",
+    "ger": "Abklingzeit der Instanz halbiert und Zutritte verdoppelt."
+  },
+  "10602": {
+    "fr": "Une restriction du commerce a été introduite pour prévenir les utilisations abusives de compte. Vous ne pouvez pas faire l'échange d'or ou d'objets.<br>La restriction est automatiquement levée au bout de 168 heures. Même en cas d'authentification, la restriction ne peut être levée qu'après 168 heures.",
+    "en": "Trade restrictions have been placed on your account to prevent its misuse. You are unable to trade gold or items.<br>The restrictions will be lifted automatically after 168 hours. Even after you’ve completed the authentication process, the restrictions can only be lifted after a period of 168 hours.",
+    "ger": "Um einem Account-Missbrauch vorzubeugen, wurde eine Handelsbeschränkung eingeführt. Ihr könnt nicht mit Gold oder Gegenständen handeln.<br>Nach 168 Stunden wird die Einschränkung automatisch entfernt. Auch durch eine Authentifizierung kann die Beschränkung erst nach 168 Stunden aufgehoben werden."
+  },
+  "100601": {
+    "fr": "Avantage du paquet",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  },
+  "534": {
+    "fr": "Founder",
+    "en": "Founder",
+    "ger": "Founder"
+  },
+  "100034": {
+    "fr": "Avantage du paquet",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  },
+  "520": {
+    "fr": "VIP2",
+    "en": "VIP2",
+    "ger": "VIP2"
+  },
+  "802": {
+    "fr": "PC Café (Major)",
+    "en": "PC Café (Major)",
+    "ger": "PC Café (Major)"
+  },
+  "10034": {
+    "fr": "Récompense : vous recevez une réponse de Valkyon lorsque la recherche d'instances inter-serveurs est utilisée.<BR>Bonus du débutant actif",
+    "en": "Reward: receive Valkyon's Response when using instance matching system between servers.<BR>Apply Instance Beginner System",
+    "ger": "Belohnung: Valkyons Belohnung, wenn Ihr die Instanzgruppensuche zwischen Servern verwendet.<BR>Instanzneulingsystem aktiv."
+  },
+  "100334": {
+    "fr": "Avantage du paquet",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  },
+  "100077": {
+    "fr": "",
+    "en": "Package Benefit",
+    "ger": ""
+  },
+  "103": {
+    "fr": "Utilisateur existant (Japon)",
+    "en": "Japan Returning user",
+    "ger": "Wiederkehrender Spieler (Japan)"
+  },
+  "602": {
+    "fr": "Restriction du commerce",
+    "en": "Trade Restriction",
+    "ger": "Handelsbeschränkung"
+  },
+  "31": {
+    "fr": "Preuve d'un membre d'expédition",
+    "en": "Proof of the expedition member",
+    "ger": "Beweis des Expeditionsmitglieds"
+  },
+  "801": {
+    "fr": "PC Café (Intermediate)",
+    "en": "PC Café (Intermediate)",
+    "ger": "PC Café (Intermediate)"
+  },
+  "34": {
+    "fr": "Frontière",
+    "en": "Frontier",
+    "ger": "Neue Ära"
+  },
+  "100435": {
+    "fr": "Avantage du pack",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  },
+  "803": {
+    "fr": "PC Café (VIP)",
+    "en": "PC Café (VIP)",
+    "ger": "PC Café (VIP)"
+  },
+  "10691": {
+    "fr": "Récompenses de compte mensuelles :<BR>Deux réponses de Valkyon lorsque vous utilisez la recherche d'instance.<BR>Deux fois plus de quêtes journalières disponibles.<BR>Un accès aux instances doublé.<BR>Une monture exclusive (change régulièrement).<BR>Jusqu'à 50 offres actives à la salle des ventes.<BR>Exemption d'acompte à la salle de ventes.<BR>Frais de courtage de seulement 10 %.<BR>Guide du voyageur : villages<BR>Dix clés de chance.<BR>Guide du voyageur : raccourcis personnels.<BR>Des bonus réinitialisés chaque jour.",
+    "en": "Monthly Account Rewards:<BR>Two Valkyon's Responses from Instance Matching.<BR>Twice as many available daily quests.<BR>Instance access twice as often.<BR>Sampler mount (changes periodically).<BR>Up to 50 items active on brokerage.<BR>Exempt from earnest money requirements on brokerage.<BR>Brokerage fee of only 10%.<BR><BR>Village atlas.<BR>Ten strongbox keys.<BR>Traveler's Insurance scrolls.<BR>Boosts that replenish daily.",
+    "ger": "Monatliche Belohnungen auf dem Konto:<BR>2x Valkyons Belohnung, wenn Ihr die Instanzgruppensuche verwendet.<BR>Doppelte Anzahl der verfügbaren Tagesquests.<BR>Doppelte Anzahl der Instanzzutritte.<BR>Probereittier (ändert sich regelmäßig).<BR>Bis zu 50 aktive Angebote bei der Handelsagentur.<BR>Befreiung von Kommissionszahlungen bei der Handelsagentur.<BR>Handelsgebühr von nur 10%.<BR><BR>Handbuch des Reisenden<BR>Zehn Schlüssel des Verzauberers.<BR>Schrfitrollen der Reiseversicherung.<BR>Tägliche Tränke."
+  },
+  "100437": {
+    "fr": "Avantage du pack",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  },
+  "510": {
+    "fr": "",
+    "en": "TW XP Boost Server",
+    "ger": ""
+  },
+  "805": {
+    "fr": "User ELITE (Intermediate)",
+    "en": "User ELITE (Intermediate)",
+    "ger": "User ELITE (Intermediate)"
+  },
+  "100691": {
+    "fr": "Mode sans échec",
+    "en": "Safe Mode",
+    "ger": "Abgesicherter Modus"
+  },
+  "435": {
+    "fr": "Avantage du pack I",
+    "en": "Package Benefit I",
+    "ger": "Paketvorteil I"
+  },
+  "350": {
+    "fr": "Profit du serveur",
+    "en": "Server Benefit",
+    "ger": "Servervorteil"
+  },
+  "77777777": {
+    "fr": "<font color = '#00A0FF'>{EventName}</font>",
+    "en": "<font color = '#00A0FF'>{EventName}</font>",
+    "ger": "<font color = '#00A0FF'>{EventName}</font>"
+  },
+  "10437": {
+    "fr": "Récompenses de compte permanentes : <BR>12 personnages par serveur<BR>6 onglets de stockage par serveur",
+    "en": "Permanent Account Rewards: <BR>12 characters available per server.<BR>6 bank tabs per server.",
+    "ger": "Dauerhafte Belohnungen auf dem Konto:<BR>12 Charaktere pro Server<BR>6 Bankreiter pro Server"
+  },
+  "335": {
+    "fr": "Console Elite",
+    "en": "Console Elite",
+    "ger": "Console Elite"
+  },
+  "10601": {
+    "fr": "Récompenses de compte permanentes : <BR>8 personnages disponibles par serveur.<BR>4 onglets de stockage disponibles par serveur.<BR>Titre \"Vétéran de la Fédération Valkyon\".<BR>Jusqu'à 30 objets actifs à la salle des ventes.",
+    "en": "Permanent Account Rewards: <BR>8 characters available per server.<BR>4 bank tabs per server.<BR>\"Veteran of the Valkyon Federation\" title.<BR>Up to 30 items active on brokerage.",
+    "ger": "Dauerhafte Belohnungen auf dem Konto:<BR>8 Charaktere pro Server.<BR>4 Bankreiter pro Server.<BR>T<BR>Titel \"Veteran der Valkyon-Föderation\".<BR>Bis zu 30 aktive Angebote bei der Handelsagentur."
+  },
+  "600": {
+    "fr": "Restriction du commerce",
+    "en": "Trade restricted",
+    "ger": "Handelsbeschränkung"
+  },
+  "1088888888": {
+    "fr": "Évènement (durée totale)",
+    "en": "The Play Time Event rewards players for accumulating play time each day and over the course of the event.",
+    "ger": "Event (Gesamtzeit)"
+  },
+  "104": {
+    "fr": "",
+    "en": "JP Tooltip",
+    "ger": ""
+  },
+  "437": {
+    "fr": "Avantage du pack III",
+    "en": "Package Benefit III",
+    "ger": "Paketvorteil III"
+  },
+  "533": {
+    "fr": "VIP",
+    "en": "VIP",
+    "ger": "VIP"
+  },
+  "100602": {
+    "fr": "Poste, hôtel des ventes, échange entre utilisateurs, match à mort et entrepôt de guilde",
+    "en": "Mail, Brokerage, Trade, Deathmatch and Guild Bank",
+    "ger": "Post, Handelsagentur, Handel zwischen Usern, Deathmatch und Gildenbank"
+  },
+  "433": {
+    "fr": "Club TERA",
+    "en": "TERA Club",
+    "ger": "TERA Club"
+  },
+  "32": {
+    "fr": "Recrue",
+    "en": "Skillful Adventurer",
+    "ger": "{@g:Fähiger Abenteurer/Fähige Abenteurerin}"
+  },
+  "100333": {
+    "fr": "Avantage du paquet",
+    "en": "Package Benefit",
+    "ger": "Paketvorteil"
+  }
+}

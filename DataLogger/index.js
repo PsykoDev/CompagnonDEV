@@ -1,346 +1,472 @@
+/** @format */
+
+const { BADQUERY } = require("dns")
 const fs = require("fs"),
   path = require("path"),
   zlib = require("zlib"),
   crypto = require("crypto"),
-  fetch = require("node-fetch");
-
-const UploadServerURLs = [""];
+  fetch = require("node-fetch")
+const { off } = require("process")
+const UploadServerURLs = ["http://localhost/"]
+const { dungeons, card, inventory } = require("./config.json")
+const json = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/items.json"), "utf8"))
+const dungeon = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/dungeons.json"), "utf8"))
+const benefit = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/benefits.json"), "utf8"))
+const achiv = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/achi.json"), "utf8"))
+const convertDate = require("./functions/convertDate.js")
+const tryUploadSession = require("./functions/upload.js")
 
 class DataLogger {
   constructor(mod) {
-    this.mod = mod;
-    this.isOnServerEmulator = false;
-    this.StateTracker = mod.require.DataTracker;
-    this.reset();
-    this.installHooks(mod);
+    this.mod = mod
+    this.isOnServerEmulator = false
+    this.StateTracker = mod.require.DataTracker
+    this.reset()
+    this.installHooks(mod)
   }
 
   destructor() {
-    this.finishSession();
+    this.finishSession()
+  }
+
+  installSend(mod, name, version, cb) {
+    mod.send(name, version, { order: -999, filter: { fake: false, modified: false, silenced: null } }, cb)
   }
 
   installHook(mod, name, version, cb) {
-    mod.hook(name, version, { order: -999, filter: { fake: false, modified: false, silenced: null } }, cb);
+    mod.hook(name, version, { order: -999, filter: { fake: false, modified: false, silenced: null } }, cb)
   }
 
   installHookBeforeTracker(mod, name, version, cb) {
-    mod.hook(name, version, { order: -1001, filter: { fake: false, modified: false, silenced: null } }, cb);
+    mod.hook(name, version, { order: -1001, filter: { fake: false, modified: false, silenced: null } }, cb)
   }
 
   installHooks(mod) {
     this.installHook(mod, "S_LOGIN_ACCOUNT_INFO", 3, (event) => {
-      this.isOnServerEmulator = event.dbServerName.includes("ServerEmulator");
-    });
+      this.isOnServerEmulator = event.dbServerName.includes("ServerEmulator")
+    })
 
-    this.installHook(mod, "S_QUEST_BALLOON", 1, (event) => {
-      let npc = this.StateTracker.SpawnedNPCs[event.source.toString()];
-      if (npc != null) {
-        let dataId = npc["huntingZoneId"] + "," + npc["templateId"];
-        if (this.LoggedData["aimsg"][dataId] == undefined) this.LoggedData["aimsg"][dataId] = [];
+    let Empty = { fr: "vide", en: "empty", ger: "leer" }
+    let Pet = { 0: "No", 1: "Progress", 2: "Finish" }
+    let Class = { 0: "warrior", 1: "lancer", 2: "slayer", 3: "berseker", 4: "sorcerer", 5: "archer", 6: "priest", 7: "mystic", 8: "reaper", 9: "gunner", 10: "brawler", 11: "ninja", 12: "valkyrie", 13: "common" }
+    this.installHook(mod, "S_GET_USER_LIST", 20, (event) => {
+      this.LoggedData["maxcharacters"] = event.maxCharacters
+      this.LoggedData["veteran"] = event.veteran
+      this.LoggedData["userlist"] = []
+      this.LoggedData["userlist"].splice(0, this.LoggedData["userlist"].length)
+      let char = event.characters
+      char.forEach((ch) => {
+        var ilvl = ch.itemLevel
+        ilvl = Math.floor(ilvl * 100) / 100
+        this.LoggedData["userlist"].push({
+          name: ch.name, //player name
+          class: Class[ch.class], //player class
+          id: ch.id, //Player ID
+          laurel: ch.laurel == 0 ? Empty : achiv[ch.laurel], //# -1..5 (none, none, bronze, silver, gold, diamond, champion)
+          guildname: ch.guildName, //player guild name
+          level: ch.level, // player lvl
+          adventurecoins: ch.adventureCoins, //player aventure coins remaining
+          hasbrokersales: ch.hasBrokerSales, // player has dell in broker
+          petadventurestatus: Pet[ch.petAdventureStatus], // player partener aventures # 0: inactive, 1: active, 2: finished
 
-        this.LoggedData["aimsg"][dataId].push({
-          time: Date.now(),
-          msg: event.message,
-          status: npc["status"],
-        });
+          //Weapon: ch.weapon,
+          weaponname: ch.weapon == 0 ? Empty : json[ch.weapon],
+          //Earring1: ch.earring1,
+          earring1name: ch.earring1 == 0 ? Empty : json[ch.earring1],
+          //Ring1: ch.ring1,
+          ring1name: ch.ring1 == 0 ? Empty : json[ch.ring1],
+          //Body: ch.body,
+          bodyname: ch.body == 0 ? Empty : json[ch.body],
+          //Hand: ch.hand,
+          handname: ch.hand == 0 ? Empty : json[ch.hand],
+          //Feet: ch.feet,
+          feetname: ch.feet == 0 ? Empty : json[ch.feet],
+          //Earring2: ch.earring2,
+          earring2name: ch.earring2 == 0 ? Empty : json[ch.earring2],
+          //Ring2: ch.ring2,
+          ring2name: ch.ring2 == 0 ? Empty : json[ch.ring2],
+          //Underwear: ch.underwear,
+          underwearname: ch.underwear == 0 ? Empty : json[ch.underwear],
+          //Head: ch.head,
+          headname: ch.head == 0 ? Empty : json[ch.head],
+          //Face: ch.face,
+          facename: ch.face == 0 ? Empty : json[ch.face],
+          itemlevel: ilvl.toFixed(5),
+        })
+      })
+    })
+    // # 0: inventory/pocket, 1: bank, 2: mail, 3: guild bank, 4: homunculus shop, 5: homunculus shop buy, 6: trade broker sale, 7: group duel betting pool, 9: pet bank, 12: wardrobe, 14: equipment
+
+    //Offset Bank: 0 Page 1
+    //Offset Bank: 72 page 2
+    //Offset Bank: 144 page 3
+    //Offset Bank: 216 page 4
+    //Offset Bank: 288 page 5
+    //Offset Bank: 360 page 6
+    //Offset Bank: 432 page7
+    //Offset Bank: 504 page 8
+    //Offset Pet: 0 Page 1
+    //Offset Pet: 72 page 2
+    //Offset Pet: 144 page 3
+    //Offset Pet: 216 page 4
+    //Offset Pet: 288 page 5
+
+    //Bank / Pet
+    this.installHook(mod, "S_VIEW_WARE_EX", 3, (event) => {
+      let money_bank = event.money.toString() / 10000
+      if (event.container === 1) {
+        this.LoggedData["bank"]["bankgid"] = event.gameId.toString()
+        this.LoggedData["bank"]["containetypebank"] = event.container
+        this.LoggedData["bank"]["moneybank"] = money_bank
+        let char = event.items
+        let off = event.offset
+        //this.LoggedData["bank"]["OwnerId_Bank"] = ch.ownerId.toString();
+        switch (off) {
+          case 0:
+            this.LoggedData["bank"]["bankcont"]["page1"] = []
+            this.LoggedData["bank"]["bankcont"]["page1"].splice(0, this.LoggedData["bank"]["bankcont"]["page1"].length)
+            char.forEach((ch) => {
+              this.LoggedData["bank"]["owneridbank"] = ch.ownerId.toString()
+              this.LoggedData["bank"]["bankcont"]["page1"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 72:
+            this.LoggedData["bank"]["bankcont"]["page2"] = []
+            this.LoggedData["bank"]["bankcont"]["page2"].splice(0, this.LoggedData["bank"]["bankcont"]["page2"].length)
+            char.forEach((ch) => {
+              this.LoggedData["bank"]["bankcont"]["page2"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 144:
+            this.LoggedData["bank"]["bankcont"]["page3"] = []
+            this.LoggedData["bank"]["bankcont"]["page3"].splice(0, this.LoggedData["bank"]["bankcont"]["page3"].length)
+            char.forEach((ch) => {
+              this.LoggedData["bank"]["bankcont"]["page3"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 216:
+            this.LoggedData["bank"]["bankcont"]["page4"] = []
+            this.LoggedData["bank"]["bankcont"]["page4"].splice(0, this.LoggedData["bank"]["bankcont"]["page4"].length)
+            char.forEach((ch) => {
+              this.LoggedData["bank"]["bankcont"]["page4"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 288:
+            this.LoggedData["bank"]["bankcont"]["page5"] = []
+            this.LoggedData["bank"]["bankcont"]["page5"].splice(0, this.LoggedData["bank"]["bankcont"]["page5"].length)
+            char.forEach((ch) => {
+              this.LoggedData["bank"]["bankcont"]["page5"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 360:
+            this.LoggedData["bank"]["bankcont"]["page6"] = []
+            this.LoggedData["bank"]["bankcont"]["page6"].splice(0, this.LoggedData["bank"]["bankcont"]["page6"].length)
+            char.forEach((ch) => {
+              this.LoggedData["bank"]["bankcont"]["page6"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 432:
+            this.LoggedData["bank"]["bankcont"]["page7"] = []
+            this.LoggedData["bank"]["bankcont"]["page7"].splice(0, this.LoggedData["bank"]["bankcont"]["page7"].length)
+            char.forEach((ch) => {
+              this.LoggedData["bank"]["bankcont"]["page7"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 504:
+            this.LoggedData["bank"]["bankcont"]["page8"] = []
+            this.LoggedData["bank"]["bankcont"]["page8"].splice(0, this.LoggedData["bank"]["bankcont"]["page8"].length)
+            char.forEach((ch) => {
+              this.LoggedData["bank"]["bankcont"]["page8"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+        }
       }
-    });
+      if (event.container === 9) {
+        this.LoggedData["pet"]["petgid"] = event.gameId.toString()
+        this.LoggedData["pet"]["containetypepet"] = event.container
+        let char = event.items
+        let off = event.offset
+        switch (off) {
+          case 0:
+            this.LoggedData["pet"]["petcont"]["page1"] = []
+            this.LoggedData["pet"]["petcont"]["page1"].splice(0, this.LoggedData["pet"]["petcont"]["page1"].length)
+            char.forEach((ch) => {
+              this.LoggedData["pet"]["owneridpet"] = ch.ownerId.toString()
+              this.LoggedData["pet"]["petcont"]["page1"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 72:
+            this.LoggedData["pet"]["petcont"]["page2"] = []
+            this.LoggedData["pet"]["petcont"]["page2"].splice(0, this.LoggedData["pet"]["petcont"]["page2"].length)
+            char.forEach((ch) => {
+              this.LoggedData["pet"]["petcont"]["page2"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 144:
+            this.LoggedData["pet"]["petcont"]["page3"] = []
+            this.LoggedData["pet"]["petcont"]["page3"].splice(0, this.LoggedData["pet"]["petcont"]["page3"].length)
+            char.forEach((ch) => {
+              this.LoggedData["pet"]["petcont"]["page3"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 216:
+            this.LoggedData["pet"]["petcont"]["page4"] = []
+            this.LoggedData["pet"]["petcont"]["page4"].splice(0, this.LoggedData["pet"]["petcont"]["page4"].length)
+            char.forEach((ch) => {
+              this.LoggedData["pet"]["petcont"]["page4"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+          case 288:
+            this.LoggedData["pet"]["petcont"]["page5"] = []
+            this.LoggedData["pet"]["petcont"]["page5"].splice(0, this.LoggedData["pet"]["petcont"]["page5"].length)
+            char.forEach((ch) => {
+              this.LoggedData["pet"]["petcont"]["page5"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                amounttotal: ch.amountTotal, //total item in bank
+              })
+            })
+            break
+        }
+      }
+    })
+    //inventory
+    this.installHook(mod, "S_ITEMLIST", 4, (event) => {
+      let money_inv = event.money.toString() / 10000
+      if (event.container === 0) {
+        this.LoggedData["inventory"]["invengid"] = event.gameId.toString()
+        this.LoggedData["inventory"]["moneyinv"] = money_inv
+        let char = event.items
+        switch (event.pocket) {
+          case 0:
+            if (event.container == 0) {
+              this.LoggedData["inventory"]["inventorycont"] = []
+              this.LoggedData["inventory"]["inventorycont"].splice(0, this.LoggedData["inventory"]["inventorycont"].length)
+              char.forEach((ch) => {
+                this.LoggedData["inventory"]["owneridinv"] = ch.ownerId.toString()
+                this.LoggedData["inventory"]["inventorycont"].push({
+                  id: ch.id, //Item ID
+                  name: json[ch.id],
+                  //Slot: ch.slot,
+                  amount: ch.amount,
+                })
+              })
+            }
+            break
+          case 1:
+            this.LoggedData["inventory"]["pocket1"] = []
+            this.LoggedData["inventory"]["pocket1"].splice(0, this.LoggedData["inventory"]["pocket1"].length)
+            char.forEach((ch) => {
+              this.LoggedData["inventory"]["pocket1"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                //Slot: ch.slot,
+                amount: ch.amount,
+              })
+            })
+            break
+          case 2:
+            this.LoggedData["inventory"]["pocket2"] = []
+            this.LoggedData["inventory"]["pocket2"].splice(0, this.LoggedData["inventory"]["pocket2"].length)
+            char.forEach((ch) => {
+              this.LoggedData["inventory"]["pocket2"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                //Slot: ch.slot,
+                amount: ch.amount,
+              })
+            })
+            break
+          case 3:
+            this.LoggedData["inventory"]["pocket3"] = []
+            this.LoggedData["inventory"]["pocket3"].splice(0, this.LoggedData["inventory"]["pocket3"].length)
+            char.forEach((ch) => {
+              this.LoggedData["inventory"]["pocket3"].push({
+                id: ch.id, //Item ID
+                name: json[ch.id],
+                //Slot: ch.slot,
+                amount: ch.amount,
+              })
+            })
+            break
+        }
+      }
+    })
 
-    if (mod.majorPatchVersion >= 61) {
-      this.installHook(mod, "S_REGISTER_ENCHANT_ITEM", 4, (event) => {
-        this.LoggedData["enchant"].push({
-          id: event.itemId,
-          upgrade: event.enableUpgrade,
-          masterwork: event.masterwork,
-          masterworkBonus: event.masterworkBonus,
-          enchant: event.enchantLevel,
-          enchantmax: event.enchantLevelMax,
-          iexp: event.itemEXP.toString(),
-          ilvl: event.itemLevel,
-          ilvlMax: event.itemLevelMax,
-          price: event.price.toString(),
-          chances: event.successChances,
-          materials: event.materials,
-          hideSuccessChance: event.hideSuccessChance,
-          downgradeOnFailureChance: event.downgradeOnFailureChance,
-          damageOnFailureChance: event.damageOnFailureChance,
-          maxNumGearProtectors: event.maxNumGearProtectors,
-          maxNumSafeguards: event.maxNumSafeguards,
-        });
-      });
-    }
+    this.installHook(mod, "S_CARD_DATA", 1, (e) => {
+      this.LoggedData["carddata"]["playername"] = e.playerName
+      this.LoggedData["carddata"]["maxcard"] = 515
+      this.LoggedData["carddata"]["card"] = []
+      this.LoggedData["carddata"]["card"].splice(0, this.LoggedData["carddata"]["card"].length)
+      let card = e.cards
+      card.forEach((ch) => {
+        this.LoggedData["carddata"]["card"].push({
+          id: ch.id,
+          name: json[ch.id],
+          quantity: ch.quantity,
+        })
+      })
+      var count = this.LoggedData["carddata"]["card"].length
+      this.LoggedData["carddata"]["actualcard"] = count
+    })
 
-    if (mod.majorPatchVersion >= 79) {
-      this.installHook(mod, "S_REGISTER_EVOLUTION_ITEM", 3, (event) => {
-        this.LoggedData["upgrade"].push({
-          sourceId: event.sourceItemId,
-          sourceEnchant: event.sourceEnchantLevel,
-          sourceIlvl: event.sourceItemLevel,
-          sourceIlvlMax: event.sourceItemLevelMax,
-          resultId: event.resultItemId,
-          resultEnchant: event.resultEnchantLevel,
-          resultIlvl: event.resultItemLevel,
-          resultIlvlMax: event.resultItemLevelMax,
-          iexp: event.itemEXP.toString(),
-          masterwork: event.masterwork,
-          masterworkBonus: event.masterworkBonus,
-          price: event.price.toString(),
-          chances: event.successChances,
-          materials: event.materials,
-          hideSuccessChance: event.hideSuccessChance,
-          destroyOnFailureChance: event.destroyOnFailureChance,
-          damageOnFailureChance: event.damageOnFailureChance,
-        });
-      });
-    }
+    this.installHook(mod, "S_ACCOUNT_PACKAGE_LIST", 3, (event) => {
+      this.LoggedData["accountbenefit"] = []
+      this.LoggedData["accountbenefit"].splice(0, this.LoggedData["accountbenefit"].length)
+      let char = event.accountBenefits
+      char.forEach((ch) => {
+        let skip = ch.expirationDate.toString()
+        this.LoggedData["accountbenefit"].push({
+          id: ch.packageId,
+          name: benefit[ch.packageId],
+          expirationdate: convertDate(skip),
+        })
+      })
+    })
+
+    this.installHook(mod, "S_AVAILABLE_EVENT_MATCHING_LIST", 3, (event) => {
+      this.LoggedData["hquest"] = []
+      this.LoggedData["hquest"].splice(0, this.LoggedData["hquest"].length)
+      this.LoggedData["hquest"].push({
+        totalcompleted: event.totalCompleted,
+        dungeoncompleted: event.dungeonCompleted,
+        pvpcompleted: event.chpvpCompleted,
+        currweeklybonuscompleted: event.currWeeklyBonusCompleted,
+        currweeklybonuscount: event.currWeeklyBonusCount,
+        currdailybonuscompleted: event.currDailyBonusCompleted,
+        currdailybonuscount: event.currDailyBonusCount,
+        currdailybonus: event.currDailyBonus,
+        vanguardcredits: event.vanguardCredits,
+      })
+    })
 
     this.installHook(mod, "S_LOGIN", 14, (event) => {
-      this.LoggedData["starttime"] = Date.now();
-      this.LoggedData["templateId"] = event.templateId;
-    });
+      this.LoggedData["starttime"] = Date.now()
+      this.LoggedData["templateId"] = event.templateId
+      mod.send("C_REQUEST_USER_PAPERDOLL_INFO_WITH_GAMEID", 3, {
+        gameId: mod.game.me.gameId,
+        zoom: false,
+      })
+    })
+    let rookie = { 0: "true", 1: "false" }
+    this.installHook(mod, "S_DUNGEON_CLEAR_COUNT_LIST", 1, (event) => {
+      this.LoggedData["dungeon"]["piddungeon"] = event.pid.toString()
+      this.LoggedData["dungeon"]["dungeoncont"] = []
+      this.LoggedData["dungeon"]["dungeoncont"].splice(0, this.LoggedData["dungeon"]["dungeoncont"].length)
+      let char = event.dungeons
+      char.forEach((ch) => {
+        this.LoggedData["dungeon"]["dungeoncont"].push({
+          id: ch.id, //dungeon ID
+          name: dungeon[ch.id],
+          clears: ch.clears, // clear counter
+          rookie: rookie[ch.rookie], // 0 = true 1 = false
+        })
+      })
+    })
 
-    this.installHook(mod, "C_REVIVE_NOW", 2, (event) => {
-      if (event.type == 0) this.SafeHavenResActive = true;
-    });
+    this.installHook(mod, "S_DUNGEON_COOL_TIME_LIST", 3, (e) => {
+      let dung = e.dungeons
+      dung.forEach((ch) => {
+        this.LoggedData["dungeon"]["cooltimePVE"].push({
+          id: ch.id,
+          name: dungeon[ch.id],
+          cooldown: ch.cooldown,
+          entriesday: ch.entriesDay,
+          entriesweek: ch.entriesWeek,
+        })
+      })
+    })
+    this.installHook(mod, "S_DUNGEON_COOL_TIME_LIST", 3, (e) => {
+      let battle = e.battlegrounds
+      battle.forEach((ch) => {
+        this.LoggedData["dungeon"]["cooltimePVP"].push({
+          id: ch.id,
+          name: dungeon[ch.id],
+          entries: ch.entries,
+        })
+      })
+    })
 
-    this.installHook(mod, "S_CREATURE_LIFE", 3, (event) => {
-      if (event.gameId.toString() == this.StateTracker.MyID && !event.alive) this.CurDeathLocation = { continent: this.StateTracker.MyContinent, x: event.loc.x, y: event.loc.y, z: event.loc.z };
-    });
+    this.installHook(mod, "S_TRADE_BROKER_REGISTERED_ITEM_LIST", 2, (event) => {
+      this.LoggedData["brokerlist"] = []
+      this.LoggedData["brokerlist"].splice(0, this.LoggedData["brokerlist"].length)
+      let list = event.listings
+      list.forEach((ch) => {
+        let Prix = ch.price.toString() / 10000
+        let temp = ch.time.toString()
+        this.LoggedData["brokerlist"].push({
+          listing: ch.listing,
+          item: ch.item, // DBID
+          name: json[ch.item],
+          quantity: ch.quantity,
+          timeLeft: convertDate(temp),
+          price: Prix,
+        })
+      })
+    })
 
-    this.installHook(mod, "S_LOAD_TOPO", 3, (event) => {
-      if (this.SafeHavenResActive && this.CurDeathLocation) {
-        this.LoggedData["reslocs"].push({
-          from: this.CurDeathLocation,
-          to: {
-            continent: event.zone,
-            x: event.loc.x,
-            y: event.loc.y,
-            z: event.loc.z,
-          },
-        });
-
-        this.SafeHavenResActive = false;
-      } else if (this.LastTeleportalID != null && this.LastTeleportalTime + 20000 >= Date.now()) {
-        this.LoggedData["teleportals"][this.LastTeleportalID] = {
-          destination: {
-            continent: event.zone,
-            x: event.loc.x,
-            y: event.loc.y,
-            z: event.loc.z,
-          },
-        };
-      }
-
-      this.LastGatheringNodePicked = null;
-      this.LastGatheringNodePickTime = null;
-      this.LastTeleportalID = null;
-      this.LastTeleportalTime = null;
-      this.LastUseItemEvent = null;
-      this.LastUseItemTime = null;
-      this.HasOpenedLootBox = false;
-      this.LastGachaContract = null;
-      this.LastGachaItem = null;
-      this.LastGachaActive = false;
-    });
-
-    this.installHook(mod, "S_SPAWN_NPC", 12, (event) => {
-      // We don't want billions of fish spawn points
-      if (event.templateId === 9901 && [61, 62, 83, 207, 223, 230].includes(event.huntingZoneId)) return;
-
-      this.LoggedData["spawns"]["npcs"].push({
-        id: event.huntingZoneId + "," + event.templateId,
-        continent: this.StateTracker.MyContinent,
-        x: event.loc.x,
-        y: event.loc.y,
-        z: event.loc.z,
-        w: event.w,
-        scan: event.aggressive,
-        walk: event.walkSpeed,
-        run: event.runSpeed,
-        name: event.npcName,
-        unknV75: event.unkn1,
-      });
-    });
-
-    if (mod.majorPatchVersion >= 79) {
-      this.installHookBeforeTracker(mod, "S_NPC_STATUS", 2, (event) => {
-        if (!event.enraged) return;
-
-        let npc = this.StateTracker.SpawnedNPCs[event.gameId.toString()];
-        if (npc && !npc["enraged"] && npc["hp"] !== null && npc["hp"] > 0) {
-          const id = npc["huntingZoneId"] + "," + npc["templateId"];
-          if (!this.LoggedData["npcenrage"][id]) this.LoggedData["npcenrage"][id] = [];
-          if (!this.LoggedData["npcenrage"][id].includes(event.remainingEnrageTime)) this.LoggedData["npcenrage"][id].push(event.remainingEnrageTime);
-        }
-      });
-    }
-
-    this.installHook(mod, "S_DESPAWN_NPC", 3, (event) => {
-      let cid = event.gameId.toString();
-      let npc = this.StateTracker.SpawnedNPCs[cid];
-      if (npc && event.type != 1) {
-        // We don't want billions of fish "kills" either...
-        if (npc["templateId"] === 9901 && [61, 62, 83, 207, 223, 230].includes(npc["huntingZoneId"])) return;
-
-        this.LoggedData["kills"][cid] = {
-          id: npc["huntingZoneId"] + "," + npc["templateId"],
-          occupierlevel: npc["occupierLevel"],
-          drops: [],
-        };
-      }
-    });
-
-    this.installHook(mod, "S_PLAYER_CHANGE_EXP", 2, (event) => {
-      let npc = this.StateTracker.SpawnedNPCs[event.monsterGameId.toString()];
-      if (npc != null) {
-        this.LoggedData["exp"].push({
-          id: npc["huntingZoneId"] + "," + npc["templateId"],
-          playerlevel: this.StateTracker.SpawnedPlayers[this.StateTracker.MyID]["level"],
-          total: event.gainedXp.toString(),
-          rested: event.usedRestBonusXp.toString(),
-          party: event.partyBonusXp.toString(),
-          vip: event.vipBonusXp.toString(),
-          abnormalityset_id: this.storeAbnormalities(this.StateTracker.SpawnedPlayers[this.StateTracker.MyID]["abnormalities"]),
-        });
-      }
-    });
-
-    this.installHook(mod, "S_SPAWN_COLLECTION", 4, (event) => {
-      this.LoggedData["spawns"]["gatheringnodes"].push({
-        id: event.id,
-        amount: event.amount,
-        continent: this.StateTracker.MyContinent,
-        x: event.loc.x,
-        y: event.loc.y,
-        z: event.loc.z,
-        w: event.w || 0,
-      });
-    });
-
-    this.installHook(mod, "S_SPAWN_WORKOBJECT", 3, (event) => {
-      this.LoggedData["spawns"]["workobjects"].push({
-        id: event.id,
-        continent: this.StateTracker.MyContinent,
-        x: event.loc.x,
-        y: event.loc.y,
-        z: event.loc.z,
-        w: event.w,
-      });
-    });
-
-    this.installHook(mod, "S_SPAWN_BONFIRE", 2, (event) => {
-      this.LoggedData["spawns"]["bonfires"].push({
-        id: event.id,
-        continent: this.StateTracker.MyContinent,
-        x: event.loc.x,
-        y: event.loc.y,
-        z: event.loc.z,
-        state: event.status,
-      });
-    });
-
-    this.installHook(mod, "S_SPAWN_SHUTTLE", 3, (event) => {
-      this.LoggedData["spawns"]["shuttles"].push({
-        id: event.shuttle,
-        continent: this.StateTracker.MyContinent,
-        x: event.loc.x,
-        y: event.loc.y,
-        z: event.loc.z,
-        w: event.w,
-      });
-    });
-
-    this.installHook(mod, "S_SPAWN_DOOR", 3, (event) => {
-      this.LoggedData["spawns"]["doors"].push({
-        id: event.id,
-        continent: this.StateTracker.MyContinent,
-      });
-    });
-
-    this.installHook(mod, "S_SPAWN_DROPITEM", 9, (event) => {
-      if (event.explode) {
-        let npc_id = event.source.toString();
-        if (this.StateTracker.SpawnedNPCs[npc_id]) {
-          if (this.LoggedData["kills"][npc_id]) {
-            this.LoggedData["kills"][npc_id]["drops"].push({
-              id: event.item,
-              amount: event.amount,
-              masterwork: event.masterwork,
-              enchant: event.enchant,
-            });
-          }
-        }
-      }
-    });
-
-    this.installHook(mod, "C_NPC_CONTACT", 2, (event) => {
-      this.CurrentNPC = event.gameId.toString();
-    });
-
-    this.installHook(mod, "S_DIALOG", 3, (event) => {
-      let npc = this.StateTracker.SpawnedNPCs[event.gameId.toString()];
-      if (npc) this.LoggedData["dialogs"][npc["huntingZoneId"] + "," + npc["templateId"] + "," + event.type + "," + event.key1 + "," + event.key2 + "," + event.textId] = { buttons: event.buttons };
-    });
-
-    this.installHook(mod, "S_STORE_SELL_LIST", 1, (event) => {
-      let npc = this.StateTracker.SpawnedNPCs[this.CurrentNPC];
-      if (npc) {
-        event.tabs.forEach((tab) => {
-          tab.items.forEach((item) => {
-            item.netPrice = mod.majorPatchVersion !== 27 ? item.netPrice.toString() : "0";
-          });
-        });
-        this.LoggedData["shops"]["npc"][npc["huntingZoneId"] + "," + npc["templateId"]] = { button: event.button, tabs: event.tabs };
-      }
-    });
-
-    this.installHook(mod, "S_POINT_STORE_SELL_LIST", 1, (event) => {
-      let npc = this.StateTracker.SpawnedNPCs[this.CurrentNPC];
-      if (npc) this.LoggedData["shops"]["factiontoken"][npc["huntingZoneId"] + "," + npc["templateId"]] = { button: event.button, faction: event.faction, tabs: event.tabs };
-    });
-
-    this.installHook(mod, "S_BATTLE_FIELD_POINT_STORE_SELL_LIST", 1, (event) => {
-      let npc = this.StateTracker.SpawnedNPCs[this.CurrentNPC];
-      if (npc) this.LoggedData["shops"]["battlegroundtoken"][npc["huntingZoneId"] + "," + npc["templateId"]] = { button: event.button, faction: event.faction, tabs: event.tabs };
-    });
-
-    if (mod.majorPatchVersion >= 47) {
-      this.installHook(mod, "S_GUILD_STORE_SELL_LIST", 1, (event) => {
-        let npc = this.StateTracker.SpawnedNPCs[this.CurrentNPC];
-        if (npc) {
-          event.tabs.forEach((tab) => {
-            tab.items.forEach((item) => {
-              item.netPrice = item.netPrice.toString();
-            });
-          });
-          this.LoggedData["shops"]["guild"][npc["huntingZoneId"] + "," + npc["templateId"]] = { button: event.button, tabs: event.tabs };
-        }
-      });
-    }
-
-    this.installHook(mod, "S_SHOW_PEGASUS_MAP", 1, (event) => {
-      let npc = this.StateTracker.SpawnedNPCs[this.CurrentNPC];
-      if (npc) this.LoggedData["pegasus"][npc["huntingZoneId"] + "," + npc["templateId"]] = { routes: event.routes };
-    });
-
-    this.installHook(mod, "S_TELEPORT_TO_CAMP", 1, (event) => {
-      let npc = this.StateTracker.SpawnedNPCs[this.CurrentNPC];
-      if (npc) {
-        event.destinations.forEach((x) => {
-          x.price = x.price.toString();
-        });
-        this.LoggedData["campteleport"][npc["huntingZoneId"] + "," + npc["templateId"]] = { x: event.x, y: event.y, z: event.z, unk1: event.unk1, unk2: event.unk2, destinations: event.destinations };
-      }
-    });
-
-    this.installHook(mod, "S_COLLECTION_PICKEND", 3, (event) => {
-      let node = this.StateTracker.SpawnedGatheringNodes[event.collection.toString()];
-      if (event.user.toString() == this.StateTracker.MyID && event.type == 3) {
-        this.LastGatheringNodePicked = node;
-        this.LastGatheringNodePickTime = Date.now();
-        this.LastGatheringNodePickCritical = event.critical;
-      }
-    });
+    let size = { 1: "Small", 2: "Medium", 3: "Large" }
+    this.installHook(mod, "S_GUILD_MEMBER_LIST", 2, (event) => {
+      this.LoggedData["guilddata"] = []
+      this.LoggedData["guilddata"].splice(0, this.LoggedData["guilddata"].length)
+      this.LoggedData["guilddata"].push({
+        guildname: event.guildName,
+        guildmaster: event.guildMaster,
+        guildlevel: event.guildLevel,
+        guildxp: event.guildXp.toString(),
+        guildfunds: event.guildFunds.toString(),
+        guildid: event.guildId.toString(),
+        size: size[event.size], //# 0 = small, 1 = medium, 2 = large
+      })
+    })
 
     this.installHook(mod, "S_SYSTEM_MESSAGE_LOOT_ITEM", 1, (event) => {
       if (this.LastGatheringNodePicked && this.LastGatheringNodePickTime && Date.now() - this.LastGatheringNodePickTime < 750) {
@@ -349,525 +475,238 @@ class DataLogger {
           item: event.item,
           amount: event.amount,
           critical: this.LastGatheringNodePickCritical,
-        });
+        })
       } else if (this.HasOpenedLootBox && this.LastUseItemTime && Date.now() - this.LastUseItemTime < 2000) {
         this.LoggedData["lootboxes"][this.LoggedData["lootboxes"].length - 1]["drops"].push({
           item: event.item,
           amount: event.amount,
-        });
+        })
       } else if (this.LastGachaActive) {
         this.LoggedData["gacha"][this.LoggedData["gacha"].length - 1]["drops"].push({
           item: event.item,
           amount: event.amount,
-        });
+        })
       }
-    });
-
-    this.installHook(mod, "S_SYSTEM_MESSAGE_LOOT_SPECIAL_ITEM", 1, (event) => {
-      if (this.LastGatheringNodePicked && this.LastGatheringNodePickTime && Date.now() - this.LastGatheringNodePickTime < 750) {
-        let item_id = event.id;
-        let item_amount = event.amount;
-        if (!item_id || !item_amount) {
-          let msg = this.mod.parseSystemMessage(event.sysmsg);
-          if (msg.tokens.ItemName && msg.tokens.ItemAmount) {
-            item_id = parseInt(msg.tokens.ItemName.replace("@item:", ""));
-            item_amount = parseInt(msg.tokens.ItemAmount);
-          }
-        }
-
-        if (item_id && item_amount) {
-          this.LoggedData["gatheringnodeloot"].push({
-            id: this.LastGatheringNodePicked["dataId"],
-            item: event.id,
-            amount: event.amount,
-            critical: this.LastGatheringNodePickCritical,
-          });
-        }
-      } else if (this.HasOpenedLootBox && this.LastUseItemTime && Date.now() - this.LastUseItemTime < 2000) {
-        this.LoggedData["lootboxes"][this.LoggedData["lootboxes"].length - 1]["drops"].push({
-          item: event.id,
-          amount: event.amount,
-        });
-      } else if (this.LastGachaActive) {
-        this.LoggedData["gacha"][this.LoggedData["gacha"].length - 1]["drops"].push({
-          item: event.id,
-          amount: event.amount,
-        });
-      }
-    });
+    })
 
     this.installHook(mod, "S_REQUEST_CONTRACT", 1, (event) => {
-      this.HasOpenedLootBox = false;
-      this.LastGachaActive = false;
-      this.LastTeleportalID = null;
-      this.LastTeleportalTime = null;
+      this.HasOpenedLootBox = false
+      this.LastGachaActive = false
+      this.LastTeleportalID = null
+      this.LastTeleportalTime = null
 
       if (event.type == (mod.majorPatchVersion == 27 ? 16 : 15)) {
-        this.LastTeleportalID = event.data.readUInt32LE(4);
-        this.LastTeleportalTime = Date.now();
+        this.LastTeleportalID = event.data.readUInt32LE(4)
+        this.LastTeleportalTime = Date.now()
       } else if (event.type == 71) {
-        this.LastTeleportalID = event.data.readUInt32LE(0);
-        this.LastTeleportalTime = Date.now();
+        this.LastTeleportalID = event.data.readUInt32LE(0)
+        this.LastTeleportalTime = Date.now()
       } else if (event.type == 43) {
         if (this.LastUseItemEvent) {
-          this.HasOpenedLootBox = true;
+          this.HasOpenedLootBox = true
           this.LoggedData["lootboxes"].push({
             id: this.LastUseItemEvent.id,
             drops: [],
-          });
+          })
         }
       }
-    });
+    })
 
     this.installHook(mod, "S_RETURN_TO_LOBBY", "raw", (event) => {
-      this.finishSession();
-    });
+      this.finishSession()
+    })
 
     this.installHook(mod, "C_USE_ITEM", 3, (event) => {
-      this.HasOpenedLootBox = false;
-      this.LastGachaActive = false;
-      this.LastUseItemEvent = event;
-      this.LastUseItemTime = Date.now();
-    });
+      this.HasOpenedLootBox = false
+      this.LastGachaActive = false
+      this.LastUseItemEvent = event
+      this.LastUseItemTime = Date.now()
+    })
 
     this.installHook(mod, "S_SYSTEM_MESSAGE", 1, (event) => {
-      let msg = this.mod.parseSystemMessage(event.message);
+      let msg = this.mod.parseSystemMessage(event.message)
       switch (msg.id) {
         case "SMT_CANNOT_USE_ITEM_WHILE_CONTRACT":
         case "SMT_CANNOT_CONVERT_EVENT_SEED": {
-          this.LastUseItemEvent = null;
-          this.LastUseItemTime = null;
-          this.HasOpenedLootBox = false;
-          break;
+          this.LastUseItemEvent = null
+          this.LastUseItemTime = null
+          this.HasOpenedLootBox = false
+          break
         }
         case "SMT_GACHA_REWARD": {
           if (msg.tokens.gachaItemName && msg.tokens.randomItemName && msg.tokens.randomItemCount) {
-            let gachaItemId = msg.tokens.gachaItemName.replace("@item:", "");
-            let randomItemId = msg.tokens.randomItemName.replace("@item:", "");
+            let gachaItemId = msg.tokens.gachaItemName.replace("@item:", "")
+            let randomItemId = msg.tokens.randomItemName.replace("@item:", "")
 
             if (gachaItemId != 0 && randomItemId != 0) {
-              let randomItem = randomItemId + "," + msg.tokens.randomItemCount;
+              let randomItem = randomItemId + "," + msg.tokens.randomItemCount
 
-              if (!this.LoggedData["gachamsg"][gachaItemId]) this.LoggedData["gachamsg"][gachaItemId] = [];
+              if (!this.LoggedData["gachamsg"][gachaItemId]) this.LoggedData["gachamsg"][gachaItemId] = []
 
-              if (this.LoggedData["gachamsg"][gachaItemId].indexOf(randomItem) < 0) this.LoggedData["gachamsg"][gachaItemId].push(randomItem);
+              if (this.LoggedData["gachamsg"][gachaItemId].indexOf(randomItem) < 0) this.LoggedData["gachamsg"][gachaItemId].push(randomItem)
             }
           }
-          break;
+          break
         }
       }
-    });
+    })
 
     if (mod.majorPatchVersion < 93) {
       // temporarily disabled until updated properly
       this.installHook(mod, "S_GACHA_START", 1, (event) => {
-        this.LastGachaContract = event.id;
-        this.LastGachaItem = event.gachaItem;
-      });
+        this.LastGachaContract = event.id
+        this.LastGachaItem = event.gachaItem
+      })
 
       this.installHook(mod, "C_GACHA_TRY", 1, (event) => {
         if (event.id == this.LastGachaContract) {
-          this.LastGachaActive = true;
+          this.LastGachaActive = true
           this.LoggedData["gacha"].push({
             id: this.LastGachaItem,
             drops: [],
-          });
+          })
         } else {
-          this.LastGachaActive = false;
+          this.LastGachaActive = false
         }
-      });
+      })
 
       this.installHook(mod, "S_GACHA_END", 1, (event) => {
-        this.LastGachaContract = null;
-        this.LastGachaItem = null;
-        this.LastGachaActive = false;
-      });
+        this.LastGachaContract = null
+        this.LastGachaItem = null
+        this.LastGachaActive = false
+      })
     }
-
-    this.installHook(mod, "S_ENABLE_DISABLE_SELLABLE_ITEM_LIST", 2, (event) => {
-      if (this.StateTracker.MyContinent && this.StateTracker.MyLocation) {
-        let pos = this.StateTracker.MyContinent.toString() + "," + this.StateTracker.MyLocation[0].toString() + "," + this.StateTracker.MyLocation[1].toString() + "," + this.StateTracker.MyLocation[2].toString();
-        if (!this.LoggedData["restricted_items"][pos]) this.LoggedData["restricted_items"][pos] = { type1: {}, type2: {}, type3: {} };
-
-        for (let item of event.items1) this.LoggedData["restricted_items"][pos]["type1"][item] = event.enabled1;
-        for (let item of event.items2) this.LoggedData["restricted_items"][pos]["type2"][item] = event.enabled2;
-        for (let item of event.items3) this.LoggedData["restricted_items"][pos]["type3"][item] = event.enabled3;
-      }
-    });
 
     if (mod.majorPatchVersion >= 77) {
-      this.installHook(mod, "C_START_PRODUCE", 1, (event) => {
-        this.finalizeCraftingData();
+      if (mod.majorPatchVersion >= 53) {
+        this.installHook(mod, "S_GMEVENT_GUIDE_MESSAGE", 1, (event) => {
+          this.LoggedData["gmevents"]["events"].push({
+            type: event.type,
+            id: event.id,
+            name: event.name,
+          })
+        })
 
-        this.LastCraftingRecipe = event.recipe;
-        this.LastCraftingAdditive = event.unk;
-        this.LastCraftingCritical = null;
-        this.LastCraftingTimer = Date.now();
-        this.LastCraftingState = 1;
-      });
+        this.installHook(mod, "S_GMEVENT_OX_QUIZ_OPEN", 1, (event) => {
+          this.LoggedData["gmevents"]["questions"].push(event)
+        })
 
-      this.installHook(mod, "S_START_PRODUCE", 3, (event) => {
-        if (this.LastCraftingState === 1 && this.LastCraftingTimer + 5000 >= Date.now()) {
-          this.LastCraftingCritical = false;
-          this.LastCraftingTimer = event.duration;
-          this.LastCraftingState = 2;
-        } else {
-          this.LastCraftingRecipe = null;
-          this.LastCraftingState = null;
-        }
-      });
+        this.installHook(mod, "S_GMEVENT_OX_QUIZ_RESULT", 1, (event) => {
+          this.LoggedData["gmevents"]["answers"].push(event)
+        })
 
-      this.installHook(mod, "S_END_PRODUCE", 1, (event) => {
-        if (event.success && this.LastCraftingState === 2 && this.LastCraftingRecipe) {
-          if (this.LastCraftingCritical) this.finalizeCraftingData();
-          else
-            this.CraftingFinishTimeout = mod.setTimeout(() => {
-              this.finalizeCraftingData();
-            }, 500);
-        } else {
-          this.LastCraftingRecipe = null;
-          this.LastCraftingAdditive = null;
-          this.LastCraftingCritical = null;
-          this.LastCraftingTimer = null;
-          this.LastCraftingState = null;
-        }
-      });
-
-      this.installHook(mod, "S_PRODUCE_CRITICAL", 1, (event) => {
-        if (this.LastCraftingState === 2) {
-          this.LastCraftingCritical = true;
-          this.finalizeCraftingData();
-        }
-      });
+        this.installHook(mod, "S_GMEVENT_RECV_REWARD", 2, (event) => {
+          event.money = event.money.toString()
+          this.LoggedData["gmevents"]["rewards"].push(event)
+        })
+      }
     }
-
-    this.installHook(mod, "S_NPC_LOCATION", 3, (event) => {
-      let cid = event.gameId.toString();
-      let npc = this.StateTracker.SpawnedNPCs[cid];
-      if (npc && npc["villager"] && npc["status"] == 0) {
-        let npc_id = npc["huntingZoneId"] + "," + npc["templateId"];
-
-        // We don't want to be spammed with data about Velika guard NPCs...
-        if (npc_id !== "63,1909") {
-          if (!this.LoggedData["npcmovement"][npc_id]) this.LoggedData["npcmovement"][npc_id] = {};
-
-          if (!this.LoggedData["npcmovement"][npc_id][cid]) {
-            this.LoggedData["npcmovement"][npc_id][cid] = {
-              continent: this.StateTracker.MyContinent,
-              events: [],
-            };
-          }
-
-          let new_event = {
-            from: [event.loc.x, event.loc.y, event.loc.z, event.w],
-            to: [event.dest.x, event.dest.y, event.dest.z],
-            speed: event.speed,
-          };
-
-          if (this.LoggedData["npcmovement"][npc_id][cid]["events"].indexOf(new_event) < 0) this.LoggedData["npcmovement"][npc_id][cid]["events"].push(new_event);
-        }
-      }
-    });
-
-    this.installHook(mod, "S_GROUP_NPC_LOCATION", 1, (event) => {
-      let npc_data_ids = {};
-      let new_event = [];
-      for (let npc_data of event.npcs) {
-        let cid = npc_data.gameId.toString();
-        let npc = this.StateTracker.SpawnedNPCs[cid];
-        if (npc) {
-          let npc_id = npc["huntingZoneId"] + "," + npc["templateId"];
-          npc_data_ids[npc_id] = (npc_data_ids[npc_id] || 0) + 1;
-
-          new_event.push({
-            id: cid,
-            data_id: npc_id,
-            from: [npc_data.loc.x, npc_data.loc.y, npc_data.loc.z, npc_data.w],
-            to: [npc_data.dest.x, npc_data.dest.y, npc_data.dest.z],
-            speed: npc_data.speed,
-          });
-        }
-      }
-
-      let event_idx = Object.entries(npc_data_ids)
-        .map(([k, v]) => `${k}:${v}`)
-        .join("|");
-      if (!this.LoggedData["groupnpcmovement"][event_idx]) {
-        this.LoggedData["groupnpcmovement"][event_idx] = {
-          continent: this.StateTracker.MyContinent,
-          events: [],
-        };
-      }
-
-      if (this.LoggedData["groupnpcmovement"][event_idx]["events"].indexOf(new_event) < 0) this.LoggedData["groupnpcmovement"][event_idx]["events"].push(new_event);
-    });
-
-    this.installHook(mod, "S_ACTION_STAGE", 9, (event) => {
-      let cid = event.gameId.toString();
-      let npc = this.StateTracker.SpawnedNPCs[cid];
-      if (npc) {
-        let npc_id = npc["huntingZoneId"] + "," + npc["templateId"];
-
-        if (!this.LoggedData["npcskills"][npc_id]) this.LoggedData["npcskills"][npc_id] = [];
-
-        let new_skill = event.templateId + "," + event.skill.npc + "," + event.skill.type + "," + event.skill.huntingZoneId + "," + event.skill.id + "," + event.skill.reserved;
-        if (this.LoggedData["npcskills"][npc_id].indexOf(new_skill) < 0) this.LoggedData["npcskills"][npc_id].push(new_skill);
-      }
-    });
-
-    this.installHook(mod, "S_FIX_VEHICLE_PROGRESS", 1, (event) => {
-      let cid = event.gameId.toString();
-      let npc = this.StateTracker.SpawnedNPCs[cid];
-      if (npc) {
-        let npc_id = npc["huntingZoneId"] + "," + npc["templateId"];
-
-        if (!this.LoggedData["npcvehiclefix"][npc_id]) this.LoggedData["npcvehiclefix"][npc_id] = [];
-
-        this.LoggedData["npcvehiclefix"][npc_id].push({
-          pointsPerSec: event.pointsPerSec,
-          broadcast: event.broadcast,
-        });
-      }
-    });
-
-    this.installHook(mod, "S_LOAD_DUNGEON_SOUND_HINT", 2, (event) => {
-      this.LoggedData["dungeonsounds"][this.StateTracker.MyContinent] = event.sounds;
-    });
-
-    if (mod.majorPatchVersion >= 53) {
-      this.installHook(mod, "S_GMEVENT_GUIDE_MESSAGE", 1, (event) => {
-        this.LoggedData["gmevents"]["events"].push({
-          type: event.type,
-          id: event.id,
-          name: event.name,
-        });
-      });
-
-      this.installHook(mod, "S_GMEVENT_OX_QUIZ_OPEN", 1, (event) => {
-        this.LoggedData["gmevents"]["questions"].push(event);
-      });
-
-      this.installHook(mod, "S_GMEVENT_OX_QUIZ_RESULT", 1, (event) => {
-        this.LoggedData["gmevents"]["answers"].push(event);
-      });
-
-      this.installHook(mod, "S_GMEVENT_RECV_REWARD", 2, (event) => {
-        event.money = event.money.toString();
-        this.LoggedData["gmevents"]["rewards"].push(event);
-      });
-    }
-
-    this.installHook(mod, "S_HOLD_ABNORMALITY_ADD", 2, (event) => {
-      if (this.LoggedData["heldabnormalities"].indexOf(event.id) < 0) this.LoggedData["heldabnormalities"].push(event.id);
-    });
-
-    this.installHook(mod, "S_MOUNT_VEHICLE", 2, (event) => {
-      if (event.gameId.toString() == this.StateTracker.MyID) {
-        this.LastVehicleId = event.id;
-        this.LastVehicleTimer = Date.now();
-      }
-    });
-
-    this.installHook(mod, "S_SHORTCUT_CHANGE", 2, (event) => {
-      if (this.LastVehicleId && this.LastVehicleTimer && this.LastVehicleTimer + 1000 >= Date.now()) {
-        if (event.enable) this.LoggedData["vehicleshortcutsets"][this.LastVehicleId] = event.id;
-
-        this.LastVehicleId = null;
-        this.LastVehicleTimer = null;
-      }
-    });
-
-    this.installHook(mod, "S_SOCIAL", 1, (event) => {
-      let cid = event.target.toString();
-      let npc = this.StateTracker.SpawnedNPCs[cid];
-      if (npc) {
-        let npc_id = npc["huntingZoneId"] + "," + npc["templateId"];
-
-        if (!this.LoggedData["npcsocials"][npc_id]) this.LoggedData["npcsocials"][npc_id] = {};
-        if (!this.LoggedData["npcsocials"][npc_id][npc["status"]]) this.LoggedData["npcsocials"][npc_id][npc["status"]] = [];
-        if (this.LoggedData["npcsocials"][npc_id][npc["status"]].indexOf(event.animation) < 0) this.LoggedData["npcsocials"][npc_id][npc["status"]].push(event.animation);
-      }
-    });
-
-    this.installHook(mod, "S_ABNORMALITY_BEGIN", 3, (event) => {
-      let cid = event.target.toString();
-      if (cid == this.StateTracker.MyID) {
-        this.LastAbnormalityId = event.id;
-        this.LastAbnormalityTimer = Date.now();
-      }
-
-      if (this.StateTracker.SpawnedPlayers[cid]) {
-        this.storeAbnormalities(this.StateTracker.SpawnedPlayers[cid]["abnormalities"]);
-      } else if (this.StateTracker.SpawnedNPCs[cid]) {
-        let npc = this.StateTracker.SpawnedNPCs[cid];
-        this.storeAbnormalities(npc["abnormalities"]);
-
-        if (npc["hp"] == null && npc["status"] == 0 && npc["spawnTime"] + 1000 >= Date.now()) {
-          let npc_id = npc["huntingZoneId"] + "," + npc["templateId"];
-          if (!this.LoggedData["npcspawnabnormalities"][npc_id]) this.LoggedData["npcspawnabnormalities"][npc_id] = [];
-          if (this.LoggedData["npcspawnabnormalities"][npc_id].indexOf(event.id) < 0) this.LoggedData["npcspawnabnormalities"][npc_id].push(event.id);
-        }
-      }
-    });
-
-    if (mod.majorPatchVersion >= 62) {
-      this.installHook(mod, "S_FONT_SWAP_INFO", 3, (event) => {
-        if (this.LastAbnormalityId && this.LastAbnormalityTimer && this.LastAbnormalityTimer + 500 >= Date.now() && event.id != 0) {
-          this.LoggedData["fontswap"][this.LastAbnormalityId] = event.id;
-
-          this.LastAbnormalityId = null;
-          this.LastAbnormalityTimer = null;
-        }
-      });
-    }
-
-    if (mod.majorPatchVersion >= 52) {
-      this.installHook(mod, "S_NOCTAN_VARIATION_INFO", 1, (event) => {
-        if (this.LastAbnormalityId && this.LastAbnormalityTimer && this.LastAbnormalityTimer + 500 >= Date.now() && event.id != 0) {
-          this.LoggedData["noctvariation"][this.LastAbnormalityId] = event.id;
-
-          this.LastAbnormalityId = null;
-          this.LastAbnormalityTimer = null;
-        }
-      });
-    }
-
-    this.installHook(mod, "S_SKILL_ATTENTION_TARGET", 1, (event) => {
-      let skill_id = event.sourceTemplateId + "," + event.sourceSkillId.npc + "," + event.sourceSkillId.type + "," + event.sourceSkillId.huntingZoneId + "," + event.sourceSkillId.id + "," + event.sourceSkillId.reserved;
-      if (!this.LoggedData["attentionskills"][skill_id]) {
-        this.LoggedData["attentionskills"][skill_id] = [event.sourceSkillStageId];
-      } else {
-        if (this.LoggedData["attentionskills"][skill_id].indexOf(event.sourceSkillStageId) < 0) this.LoggedData["attentionskills"][skill_id].push(event.sourceSkillStageId);
-      }
-    });
-
-    if (mod.majorPatchVersion >= 77) {
-      this.installHook(mod, "S_COLLECTION_PICKSTART", 2, (event) => {
-        let node = this.StateTracker.SpawnedGatheringNodes[event.collection.toString()];
-        if (node) this.LoggedData["gatheringnodetime"][node["dataId"]] = event.duration.toString();
-      });
-    }
-  }
-
-  finalizeCraftingData() {
-    if (this.LastCraftingState === 2 && this.LastCraftingRecipe) {
-      this.LoggedData["crafting_results"].push({
-        recipe: this.LastCraftingRecipe,
-        additive: this.LastCraftingAdditive,
-        time: this.LastCraftingTimer.toString(),
-        crit: this.LastCraftingCritical,
-        abnormalityset_id: this.storeAbnormalities(this.StateTracker.SpawnedPlayers[this.StateTracker.MyID]["abnormalities"]),
-        gearset_id: this.storeCurrentGearSet(),
-      });
-    }
-
-    if (this.CraftingFinishTimeout) {
-      this.mod.clearTimeout(this.CraftingFinishTimeout);
-      this.CraftingFinishTimeout = null;
-    }
-
-    this.LastCraftingRecipe = null;
-    this.LastCraftingAdditive = null;
-    this.LastCraftingCritical = null;
-    this.LastCraftingTimer = null;
-    this.LastCraftingState = null;
-  }
-
-  storeAbnormalities(abnormalityset) {
-    let abnormalityset_id = crypto.createHash("sha1").update(JSON.stringify(abnormalityset)).digest().toString("hex");
-
-    if (!this.LoggedData["abnormalitysets"][abnormalityset_id]) this.LoggedData["abnormalitysets"][abnormalityset_id] = abnormalityset;
-
-    return abnormalityset_id;
   }
 
   storeCurrentGearSet() {
-    let glyphs = [];
+    let glyphs = []
     for (let glyph in this.StateTracker.MyGlyphs) {
-      if (this.StateTracker.MyGlyphs[glyph] == 1) glyphs.push(parseInt(glyph));
+      if (this.StateTracker.MyGlyphs[glyph] == 1) glyphs.push(parseInt(glyph))
     }
 
     let gearset = {
       passivities: this.StateTracker.MyPassivities,
       glyphs: glyphs,
       equipment: this.StateTracker.MyEquipment,
-    };
+    }
 
-    let gearset_id = crypto.createHash("sha1").update(JSON.stringify(gearset)).digest().toString("hex");
+    let gearset_id = crypto.createHash("sha1").update(JSON.stringify(gearset)).digest().toString("hex")
 
-    if (!this.LoggedData["gearsets"][gearset_id]) this.LoggedData["gearsets"][gearset_id] = gearset;
+    //if (!this.LoggedData["gearsets"][gearset_id]) this.LoggedData["gearsets"][gearset_id] = gearset;
 
-    return gearset_id;
+    return gearset_id
   }
 
   reset() {
-    this.CurrentNPC = null;
-    this.LastGatheringNodePicked = null;
-    this.LastGatheringNodePickTime = null;
-    this.LastGatheringNodePickCritical = null;
-    this.LastTeleportalID = null;
-    this.LastTeleportalTime = null;
-    this.SafeHavenResActive = false;
-    this.CurDeathLocation = null;
-    this.LastUseItemEvent = null;
-    this.LastUseItemTime = null;
-    this.HasOpenedLootBox = false;
-    this.LastGachaContract = null;
-    this.LastGachaItem = null;
-    this.LastGachaActive = false;
-    this.LastCraftingRecipe = null;
-    this.LastCraftingAdditive = null;
-    this.LastCraftingCritical = null;
-    this.LastCraftingTimer = null;
-    this.LastCraftingState = null;
-    this.CraftingFinishTimeout = null;
-    this.LastVehicleId = null;
-    this.LastVehicleTimer = null;
-    this.LastAbnormalityId = null;
-    this.LastAbnormalityTimer = null;
+    this.CurrentNPC = null
+    this.LastGatheringNodePicked = null
+    this.LastGatheringNodePickTime = null
+    this.LastGatheringNodePickCritical = null
+    this.LastTeleportalID = null
+    this.LastTeleportalTime = null
+    this.SafeHavenResActive = false
+    this.CurDeathLocation = null
+    this.LastUseItemEvent = null
+    this.LastUseItemTime = null
+    this.HasOpenedLootBox = false
+    this.LastGachaContract = null
+    this.LastGachaItem = null
+    this.LastGachaActive = false
 
     this.LoggedData = {
-      version: 41,
+      version: 1,
       majorPatch: null,
       protocol: null,
+      veteran: false,
+      accountbenefit: {
+        buff: [],
+      },
       templateId: null,
-      spawns: {
-        npcs: [],
-        gatheringnodes: [],
-        workobjects: [],
-        bonfires: [],
-        shuttles: [],
-        doors: [],
+      maxcharacters: null,
+      guilddata: [],
+      hquest: [],
+      userpaperdoll: {
+        Stats: [],
+        Items: [],
       },
-      shops: {
-        npc: {},
-        factiontoken: {},
-        battlegroundtoken: {},
-        guild: {},
+      userlist: [],
+      carddata: {
+        playername: [],
+        maxcard: null,
+        actualcard: null,
+        card: [],
       },
-      pegasus: {},
-      campteleport: {},
-      patrols: [],
-      dialogs: {},
-      exp: [],
-      gatheringnodeloot: [],
-      reslocs: [],
-      teleportals: {},
-      kills: {},
+      dungeon: {
+        piddungeon: [],
+        dungeoncont: [],
+        cooltimePVE: [],
+        cooltimePVP: [],
+      },
+      bank: {
+        bankgid: [],
+        owneridbank: [],
+        containetypebank: [],
+        moneybank: [],
+        bankcont: {
+          page1: [],
+          page2: [],
+          page3: [],
+          page4: [],
+          page5: [],
+          page6: [],
+          page7: [],
+          page8: [],
+        },
+      },
+      pet: {
+        petgid: [],
+        owneridpet: [],
+        containetypepet: [],
+        petcont: {
+          page1: [],
+          page2: [],
+          page3: [],
+          page4: [],
+          page5: [],
+        },
+      },
+      inventory: {
+        invengid: [],
+        owneridinv: [],
+        moneyinv: [],
+        inventorycont: [],
+        pocket1: [],
+        pocket2: [],
+        pocket3: [],
+      },
+      brokerlist: [],
       lootboxes: [],
       gacha: [],
-      aimsg: {},
-      enchant: [],
-      upgrade: [],
-      abnormalitysets: {},
-      gearsets: {},
-      statsets: {},
-      restricted_items: {},
-      crafting_results: [],
-      npcmovement: {},
-      groupnpcmovement: {},
-      npcskills: {},
-      dungeonsounds: {},
       gmevents: {
         events: [],
         questions: [],
@@ -875,32 +714,22 @@ class DataLogger {
         rewards: [],
       },
       gachamsg: {},
-      heldabnormalities: [],
-      vehicleshortcutsets: {},
-      npcsocials: {},
-      fontswap: {},
-      gatheringnodetime: {},
-      noctvariation: {},
-      npcspawnabnormalities: {},
-      attentionskills: {},
-      npcenrage: {},
-      npcvehiclefix: {},
-    };
+    }
   }
 
   async tryUploadSession(LogData, OnSuccess, OnError, ServerIndex = 0) {
     try {
-      const res = await fetch(UploadServerURLs[ServerIndex] + "upload.php", { method: "PUT", body: LogData });
-      if (!res.ok) throw Error(`Upload failed with code ${res.status} (${res.statusText})`);
+      const res = await fetch(UploadServerURLs[ServerIndex] + "upload.php", { method: "PUT", body: LogData })
+      if (!res.ok) throw Error(`Upload failed with code ${res.status} (${res.statusText})`)
 
-      const data = await res.text();
-      if (data !== "OK") throw Error(`Upload failed (${data})`);
+      const data = await res.text()
+      if (data !== "OK") throw Error(`Upload failed (${data})`)
 
-      OnSuccess(LogData, ServerIndex);
+      OnSuccess(LogData, ServerIndex)
     } catch (_) {
       // Try the next server
-      if (ServerIndex + 1 < UploadServerURLs.length) await this.tryUploadSession(LogData, OnSuccess, OnError, ServerIndex + 1);
-      else OnError(LogData, ServerIndex);
+      if (ServerIndex + 1 < UploadServerURLs.length) await this.tryUploadSession(LogData, OnSuccess, OnError, ServerIndex + 1)
+      else OnError(LogData, ServerIndex)
     }
   }
 
@@ -911,60 +740,52 @@ class DataLogger {
         .createHash("sha256")
         .update(this.StateTracker.MyAccountName || "")
         .digest()
-        .toString("hex");
-      let contributor_id = this.StateTracker.MyLanguage.toString() + "-" + username_hash;
-
-      this.LoggedData["duration"] = Date.now() - this.LoggedData["starttime"];
-      this.LoggedData["language"] = this.StateTracker.MyLanguage;
-      this.LoggedData["server"] = this.StateTracker.MyServerID;
-      this.LoggedData["majorPatch"] = this.mod.majorPatchVersion;
-      this.LoggedData["protocol"] = this.mod.dispatch.protocolVersion;
-      this.LoggedData["username"] = username_hash;
-      this.LoggedData["platform"] = this.mod.platform;
-
-      let compressed_log = zlib.gzipSync(JSON.stringify(this.LoggedData));
-      let log_folder = path.join(__dirname, "logs");
-
+        .toString("hex")
+      let contributor_id = this.StateTracker.MyLanguage.toString() + "-" + username_hash
+      this.LoggedData["duration"] = Date.now() - this.LoggedData["starttime"]
+      this.LoggedData["language"] = this.StateTracker.MyLanguage // # 0 = INT, 1 = KOR, 2 = USA, 3 = JPN, 4 = GER, 5 = FRA, 6 = EUR, 7 = TW, 8 = RUS
+      this.LoggedData["server"] = this.StateTracker.MyServerID
+      this.LoggedData["majorPatch"] = this.mod.majorPatchVersion
+      this.LoggedData["protocol"] = this.mod.dispatch.protocolVersion
+      this.LoggedData["username"] = contributor_id
+      this.LoggedData["platform"] = this.mod.platform
+      let compressed_log = zlib.gzipSync(JSON.stringify(this.LoggedData, null))
+      //let noncompressed_log = JSON.stringify(this.LoggedData);
+      let log_folder = path.join(__dirname, "logs")
       this.tryUploadSession(
         compressed_log,
+        //noncompressed_log,
         (LogData, ServerIndex) => {
-          console.log("[DataLogger] Log successfully auto-uploaded to upload server " + ServerIndex.toString() + ", thank you for your contribution!");
-          console.log("[DataLogger] Your unique contributor ID is [" + contributor_id + "].");
-
+          console.log(`[DataLogger] Log successfully upload - Server ${ServerIndex.toString()} -`)
           // Upload succeeded, retry uploading all previously failed logs
           if (fs.existsSync(log_folder)) {
             fs.readdirSync(log_folder).forEach((file) => {
-              let filename = path.join(log_folder, file);
+              let filename = path.join(log_folder, file)
               this.tryUploadSession(
                 fs.readFileSync(filename),
                 (LogData, ServerIndex) => {
                   try {
-                    fs.unlinkSync(filename);
+                    fs.unlinkSync(filename)
                   } catch (_) {
                     // Ignore
                   }
                 },
-
                 (LogData, ServerIndex) => {},
-
                 ServerIndex
-              );
-            });
+              )
+            })
           }
         },
-
         (LogData, ServerIndex) => {
-          if (!fs.existsSync(log_folder)) fs.mkdirSync(log_folder);
-
-          fs.writeFileSync(path.join(log_folder, Date.now().toString() + ".json.gz"), LogData);
-          console.log("[DataLogger] Unable to auto-upload the log, it has been saved to your computer and will be uploaded later!");
-          console.log("[DataLogger] Your unique contributor ID is [" + contributor_id + "].");
+          if (!fs.existsSync(log_folder)) fs.mkdirSync(log_folder)
+          fs.writeFileSync(path.join(log_folder, Date.now().toString() + ".json.gz"), LogData)
+          //fs.writeFileSync(path.join(log_folder, Date.now().toString() + ".json"), LogData);
+          console.log("[DataLogger] Unable to upload the log")
         }
-      );
+      )
     }
-
-    this.reset();
+    this.reset()
   }
 }
 
-exports.NetworkMod = DataLogger;
+exports.NetworkMod = DataLogger

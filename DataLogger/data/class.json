@@ -1,0 +1,44 @@
+{
+  "0": {
+    "en": "Warrior"
+  },
+  "1": {
+    "en": "Lancer"
+  },
+  "2": {
+    "en": "Slayer"
+  },
+  "3": {
+    "en": "Berseker"
+  },
+  "4": {
+    "en": "Sorcerer"
+  },
+  "5": {
+    "en": "Archer"
+  },
+  "6": {
+    "en": "Priest"
+  },
+  "7": {
+    "en": "Mystic"
+  },
+  "8": {
+    "en": "Reaper"
+  },
+  "9": {
+    "en": "Gunner"
+  },
+  "10": {
+    "en": "Brawler"
+  },
+  "11": {
+    "en": "Ninja"
+  },
+  "12": {
+    "en": "Valkyrie"
+  },
+  "13": {
+    "en": "Common"
+  }
+}
