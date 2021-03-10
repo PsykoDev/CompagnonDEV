@@ -1,20 +1,17 @@
 /** @format */
 
-const { BADQUERY } = require("dns")
 const fs = require("fs"),
   path = require("path"),
   zlib = require("zlib"),
   crypto = require("crypto"),
-  fetch = require("node-fetch")
-const { off } = require("process")
-const UploadServerURLs = ["http://localhost/"]
-const { dungeons, card, inventory } = require("./config.json")
-const json = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/items.json"), "utf8"))
-const dungeon = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/dungeons.json"), "utf8"))
-const benefit = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/benefits.json"), "utf8"))
-const achiv = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/achi.json"), "utf8"))
-const convertDate = require("./functions/convertDate.js")
-const tryUploadSession = require("./functions/upload.js")
+  fetch = require("node-fetch"),
+  UploadServerURLs = ["http://localhost/"],
+  { dungeons, card, inventory } = require("./config.json"),
+  json = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/items.json"), "utf8")),
+  dungeon = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/dungeons.json"), "utf8")),
+  benefit = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/benefits.json"), "utf8")),
+  achiv = JSON.parse(fs.readFileSync(path.join(__dirname, "./data/achi.json"), "utf8")),
+  convertDate = require("./functions/convertDate.js")
 
 class DataLogger {
   constructor(mod) {
@@ -42,19 +39,19 @@ class DataLogger {
   }
 
   installHooks(mod) {
-    this.installHook(mod, "S_LOGIN_ACCOUNT_INFO", 3, (event) => {
-      this.isOnServerEmulator = event.dbServerName.includes("ServerEmulator")
+    this.installHook(mod, "S_LOGIN_ACCOUNT_INFO", 3, (e) => {
+      this.isOnServerEmulator = e.dbServerName.includes("ServerEmulator")
     })
-
-    let Empty = { fr: "vide", en: "empty", ger: "leer" }
-    let Pet = { 0: "No", 1: "Progress", 2: "Finish" }
+    // USER DATA
     let Class = { 0: "warrior", 1: "lancer", 2: "slayer", 3: "berseker", 4: "sorcerer", 5: "archer", 6: "priest", 7: "mystic", 8: "reaper", 9: "gunner", 10: "brawler", 11: "ninja", 12: "valkyrie", 13: "common" }
-    this.installHook(mod, "S_GET_USER_LIST", 20, (event) => {
-      this.LoggedData["maxcharacters"] = event.maxCharacters
-      this.LoggedData["veteran"] = event.veteran
+    this.installHook(mod, "S_GET_USER_LIST", 20, (e) => {
+      this.LoggedData["maxcharacters"] = e.maxCharacters
+      this.LoggedData["veteran"] = e.veteran
       this.LoggedData["userlist"] = []
       this.LoggedData["userlist"].splice(0, this.LoggedData["userlist"].length)
-      let char = event.characters
+      let char = e.characters
+      let Empty = { fr: "vide", en: "empty", ger: "leer" }
+      let Pet = { 0: "No", 1: "Progress", 2: "Finish" }
       char.forEach((ch) => {
         var ilvl = ch.itemLevel
         ilvl = Math.floor(ilvl * 100) / 100
@@ -95,31 +92,16 @@ class DataLogger {
         })
       })
     })
-    // # 0: inventory/pocket, 1: bank, 2: mail, 3: guild bank, 4: homunculus shop, 5: homunculus shop buy, 6: trade broker sale, 7: group duel betting pool, 9: pet bank, 12: wardrobe, 14: equipment
 
-    //Offset Bank: 0 Page 1
-    //Offset Bank: 72 page 2
-    //Offset Bank: 144 page 3
-    //Offset Bank: 216 page 4
-    //Offset Bank: 288 page 5
-    //Offset Bank: 360 page 6
-    //Offset Bank: 432 page7
-    //Offset Bank: 504 page 8
-    //Offset Pet: 0 Page 1
-    //Offset Pet: 72 page 2
-    //Offset Pet: 144 page 3
-    //Offset Pet: 216 page 4
-    //Offset Pet: 288 page 5
-
-    //Bank / Pet
-    this.installHook(mod, "S_VIEW_WARE_EX", 3, (event) => {
-      let money_bank = event.money.toString() / 10000
-      if (event.container === 1) {
-        this.LoggedData["bank"]["bankgid"] = event.gameId.toString()
-        this.LoggedData["bank"]["containetypebank"] = event.container
+    //BANK / PET DATA
+    this.installHook(mod, "S_VIEW_WARE_EX", 3, (e, lang) => {
+      let money_bank = e.money.toString() / 10000
+      if (e.container === 1) {
+        this.LoggedData["bank"]["bankgid"] = e.gameId.toString()
+        this.LoggedData["bank"]["containetypebank"] = e.container
         this.LoggedData["bank"]["moneybank"] = money_bank
-        let char = event.items
-        let off = event.offset
+        let char = e.items
+        let off = e.offset
         //this.LoggedData["bank"]["OwnerId_Bank"] = ch.ownerId.toString();
         switch (off) {
           case 0:
@@ -213,11 +195,11 @@ class DataLogger {
             break
         }
       }
-      if (event.container === 9) {
-        this.LoggedData["pet"]["petgid"] = event.gameId.toString()
-        this.LoggedData["pet"]["containetypepet"] = event.container
-        let char = event.items
-        let off = event.offset
+      if (e.container === 9) {
+        this.LoggedData["pet"]["petgid"] = e.gameId.toString()
+        this.LoggedData["pet"]["containetypepet"] = e.container
+        let char = e.items
+        let off = e.offset
         switch (off) {
           case 0:
             this.LoggedData["pet"]["petcont"]["page1"] = []
@@ -278,16 +260,16 @@ class DataLogger {
         }
       }
     })
-    //inventory
-    this.installHook(mod, "S_ITEMLIST", 4, (event) => {
-      let money_inv = event.money.toString() / 10000
-      if (event.container === 0) {
-        this.LoggedData["inventory"]["invengid"] = event.gameId.toString()
+    // INVENTORY / POCKET DATA
+    this.installHook(mod, "S_ITEMLIST", 4, (e) => {
+      let money_inv = e.money.toString() / 10000
+      if (e.container === 0) {
+        this.LoggedData["inventory"]["invengid"] = e.gameId.toString()
         this.LoggedData["inventory"]["moneyinv"] = money_inv
-        let char = event.items
-        switch (event.pocket) {
+        let char = e.items
+        switch (e.pocket) {
           case 0:
-            if (event.container == 0) {
+            if (e.container == 0) {
               this.LoggedData["inventory"]["inventorycont"] = []
               this.LoggedData["inventory"]["inventorycont"].splice(0, this.LoggedData["inventory"]["inventorycont"].length)
               char.forEach((ch) => {
@@ -340,7 +322,7 @@ class DataLogger {
         }
       }
     })
-
+    // CARD CATA
     this.installHook(mod, "S_CARD_DATA", 1, (e) => {
       this.LoggedData["carddata"]["playername"] = e.playerName
       this.LoggedData["carddata"]["maxcard"] = 515
@@ -357,11 +339,11 @@ class DataLogger {
       var count = this.LoggedData["carddata"]["card"].length
       this.LoggedData["carddata"]["actualcard"] = count
     })
-
-    this.installHook(mod, "S_ACCOUNT_PACKAGE_LIST", 3, (event) => {
+    // TERA CLUB DATA
+    this.installHook(mod, "S_ACCOUNT_PACKAGE_LIST", 3, (e) => {
       this.LoggedData["accountbenefit"] = []
       this.LoggedData["accountbenefit"].splice(0, this.LoggedData["accountbenefit"].length)
-      let char = event.accountBenefits
+      let char = e.accountBenefits
       char.forEach((ch) => {
         let skip = ch.expirationDate.toString()
         this.LoggedData["accountbenefit"].push({
@@ -371,37 +353,38 @@ class DataLogger {
         })
       })
     })
-
-    this.installHook(mod, "S_AVAILABLE_EVENT_MATCHING_LIST", 3, (event) => {
+    // H QUEST DATA
+    this.installHook(mod, "S_AVAILABLE_EVENT_MATCHING_LIST", 3, (e) => {
       this.LoggedData["hquest"] = []
       this.LoggedData["hquest"].splice(0, this.LoggedData["hquest"].length)
       this.LoggedData["hquest"].push({
-        totalcompleted: event.totalCompleted,
-        dungeoncompleted: event.dungeonCompleted,
-        pvpcompleted: event.chpvpCompleted,
-        currweeklybonuscompleted: event.currWeeklyBonusCompleted,
-        currweeklybonuscount: event.currWeeklyBonusCount,
-        currdailybonuscompleted: event.currDailyBonusCompleted,
-        currdailybonuscount: event.currDailyBonusCount,
-        currdailybonus: event.currDailyBonus,
-        vanguardcredits: event.vanguardCredits,
+        totalcompleted: e.totalCompleted,
+        dungeoncompleted: e.dungeonCompleted,
+        pvpcompleted: e.chpvpCompleted,
+        currweeklybonuscompleted: e.currWeeklyBonusCompleted,
+        currweeklybonuscount: e.currWeeklyBonusCount,
+        currdailybonuscompleted: e.currDailyBonusCompleted,
+        currdailybonuscount: e.currDailyBonusCount,
+        currdailybonus: e.currDailyBonus,
+        vanguardcredits: e.vanguardCredits,
       })
     })
-
-    this.installHook(mod, "S_LOGIN", 14, (event) => {
+    // USELLESS
+    this.installHook(mod, "S_LOGIN", 14, (e) => {
       this.LoggedData["starttime"] = Date.now()
-      this.LoggedData["templateId"] = event.templateId
+      this.LoggedData["templateId"] = e.templateId
       mod.send("C_REQUEST_USER_PAPERDOLL_INFO_WITH_GAMEID", 3, {
         gameId: mod.game.me.gameId,
         zoom: false,
       })
     })
-    let rookie = { 0: "true", 1: "false" }
-    this.installHook(mod, "S_DUNGEON_CLEAR_COUNT_LIST", 1, (event) => {
-      this.LoggedData["dungeon"]["piddungeon"] = event.pid.toString()
+    // DUNGEON DATA PAR CHAR
+    this.installHook(mod, "S_DUNGEON_CLEAR_COUNT_LIST", 1, (e) => {
+      this.LoggedData["dungeon"]["piddungeon"] = e.pid.toString()
       this.LoggedData["dungeon"]["dungeoncont"] = []
       this.LoggedData["dungeon"]["dungeoncont"].splice(0, this.LoggedData["dungeon"]["dungeoncont"].length)
-      let char = event.dungeons
+      let char = e.dungeons
+      let rookie = { 0: "true", 1: "false" }
       char.forEach((ch) => {
         this.LoggedData["dungeon"]["dungeoncont"].push({
           id: ch.id, //dungeon ID
@@ -411,7 +394,7 @@ class DataLogger {
         })
       })
     })
-
+    // CD DUNGON LIST
     this.installHook(mod, "S_DUNGEON_COOL_TIME_LIST", 3, (e) => {
       let dung = e.dungeons
       dung.forEach((ch) => {
@@ -424,6 +407,7 @@ class DataLogger {
         })
       })
     })
+    // CD PVP LIST
     this.installHook(mod, "S_DUNGEON_COOL_TIME_LIST", 3, (e) => {
       let battle = e.battlegrounds
       battle.forEach((ch) => {
@@ -434,11 +418,11 @@ class DataLogger {
         })
       })
     })
-
-    this.installHook(mod, "S_TRADE_BROKER_REGISTERED_ITEM_LIST", 2, (event) => {
+    // BROKER SELL DATA PAR CHAR
+    this.installHook(mod, "S_TRADE_BROKER_REGISTERED_ITEM_LIST", 2, (e) => {
       this.LoggedData["brokerlist"] = []
       this.LoggedData["brokerlist"].splice(0, this.LoggedData["brokerlist"].length)
-      let list = event.listings
+      let list = e.listings
       list.forEach((ch) => {
         let Prix = ch.price.toString() / 10000
         let temp = ch.time.toString()
@@ -452,56 +436,56 @@ class DataLogger {
         })
       })
     })
-
-    let size = { 1: "Small", 2: "Medium", 3: "Large" }
-    this.installHook(mod, "S_GUILD_MEMBER_LIST", 2, (event) => {
+    //GUILD DATA PAR CHAR
+    this.installHook(mod, "S_GUILD_MEMBER_LIST", 2, (e) => {
       this.LoggedData["guilddata"] = []
       this.LoggedData["guilddata"].splice(0, this.LoggedData["guilddata"].length)
+      let size = { 1: "Small", 2: "Medium", 3: "Large" }
       this.LoggedData["guilddata"].push({
-        guildname: event.guildName,
-        guildmaster: event.guildMaster,
-        guildlevel: event.guildLevel,
-        guildxp: event.guildXp.toString(),
-        guildfunds: event.guildFunds.toString(),
-        guildid: event.guildId.toString(),
-        size: size[event.size], //# 0 = small, 1 = medium, 2 = large
+        guildname: e.guildName,
+        guildmaster: e.guildMaster,
+        guildlevel: e.guildLevel,
+        guildxp: e.guildXp.toString(),
+        guildfunds: e.guildFunds.toString(),
+        guildid: e.guildId.toString(),
+        size: size[e.size], //# 0 = small, 1 = medium, 2 = large
       })
     })
-
-    this.installHook(mod, "S_SYSTEM_MESSAGE_LOOT_ITEM", 1, (event) => {
+    //GACHA DATA
+    this.installHook(mod, "S_SYSTEM_MESSAGE_LOOT_ITEM", 1, (e) => {
       if (this.LastGatheringNodePicked && this.LastGatheringNodePickTime && Date.now() - this.LastGatheringNodePickTime < 750) {
         this.LoggedData["gatheringnodeloot"].push({
           id: this.LastGatheringNodePicked["dataId"],
-          item: event.item,
-          amount: event.amount,
+          item: e.item,
+          amount: e.amount,
           critical: this.LastGatheringNodePickCritical,
         })
       } else if (this.HasOpenedLootBox && this.LastUseItemTime && Date.now() - this.LastUseItemTime < 2000) {
         this.LoggedData["lootboxes"][this.LoggedData["lootboxes"].length - 1]["drops"].push({
-          item: event.item,
-          amount: event.amount,
+          item: e.item,
+          amount: e.amount,
         })
       } else if (this.LastGachaActive) {
         this.LoggedData["gacha"][this.LoggedData["gacha"].length - 1]["drops"].push({
-          item: event.item,
-          amount: event.amount,
+          item: e.item,
+          amount: e.amount,
         })
       }
     })
-
-    this.installHook(mod, "S_REQUEST_CONTRACT", 1, (event) => {
+    //GACHA DATA
+    this.installHook(mod, "S_REQUEST_CONTRACT", 1, (e) => {
       this.HasOpenedLootBox = false
       this.LastGachaActive = false
       this.LastTeleportalID = null
       this.LastTeleportalTime = null
 
-      if (event.type == (mod.majorPatchVersion == 27 ? 16 : 15)) {
-        this.LastTeleportalID = event.data.readUInt32LE(4)
+      if (e.type == (mod.majorPatchVersion == 27 ? 16 : 15)) {
+        this.LastTeleportalID = e.data.readUInt32LE(4)
         this.LastTeleportalTime = Date.now()
-      } else if (event.type == 71) {
-        this.LastTeleportalID = event.data.readUInt32LE(0)
+      } else if (e.type == 71) {
+        this.LastTeleportalID = e.data.readUInt32LE(0)
         this.LastTeleportalTime = Date.now()
-      } else if (event.type == 43) {
+      } else if (e.type == 43) {
         if (this.LastUseItemEvent) {
           this.HasOpenedLootBox = true
           this.LoggedData["lootboxes"].push({
@@ -511,20 +495,20 @@ class DataLogger {
         }
       }
     })
-
-    this.installHook(mod, "S_RETURN_TO_LOBBY", "raw", (event) => {
+    // END SESSION LOGGER
+    this.installHook(mod, "S_RETURN_TO_LOBBY", "raw", (e) => {
       this.finishSession()
     })
-
-    this.installHook(mod, "C_USE_ITEM", 3, (event) => {
+    //GACHA DATA
+    this.installHook(mod, "C_USE_ITEM", 3, (e) => {
       this.HasOpenedLootBox = false
       this.LastGachaActive = false
-      this.LastUseItemEvent = event
+      this.LastUseItemEvent = e
       this.LastUseItemTime = Date.now()
     })
-
-    this.installHook(mod, "S_SYSTEM_MESSAGE", 1, (event) => {
-      let msg = this.mod.parseSystemMessage(event.message)
+    //GACHA DATA
+    this.installHook(mod, "S_SYSTEM_MESSAGE", 1, (e) => {
+      let msg = this.mod.parseSystemMessage(e.message)
       switch (msg.id) {
         case "SMT_CANNOT_USE_ITEM_WHILE_CONTRACT":
         case "SMT_CANNOT_CONVERT_EVENT_SEED": {
@@ -551,53 +535,27 @@ class DataLogger {
       }
     })
 
-    if (mod.majorPatchVersion < 93) {
-      // temporarily disabled until updated properly
-      this.installHook(mod, "S_GACHA_START", 1, (event) => {
-        this.LastGachaContract = event.id
-        this.LastGachaItem = event.gachaItem
-      })
-
-      this.installHook(mod, "C_GACHA_TRY", 1, (event) => {
-        if (event.id == this.LastGachaContract) {
-          this.LastGachaActive = true
-          this.LoggedData["gacha"].push({
-            id: this.LastGachaItem,
-            drops: [],
-          })
-        } else {
-          this.LastGachaActive = false
-        }
-      })
-
-      this.installHook(mod, "S_GACHA_END", 1, (event) => {
-        this.LastGachaContract = null
-        this.LastGachaItem = null
-        this.LastGachaActive = false
-      })
-    }
-
-    if (mod.majorPatchVersion >= 77) {
-      if (mod.majorPatchVersion >= 53) {
-        this.installHook(mod, "S_GMEVENT_GUIDE_MESSAGE", 1, (event) => {
+    if (mod.majorPatchVersion >= 101) {
+      if (mod.majorPatchVersion >= 101) {
+        this.installHook(mod, "S_GMEVENT_GUIDE_MESSAGE", 1, (e) => {
           this.LoggedData["gmevents"]["events"].push({
-            type: event.type,
-            id: event.id,
-            name: event.name,
+            type: e.type,
+            id: e.id,
+            name: e.name,
           })
         })
 
-        this.installHook(mod, "S_GMEVENT_OX_QUIZ_OPEN", 1, (event) => {
-          this.LoggedData["gmevents"]["questions"].push(event)
+        this.installHook(mod, "S_GMEVENT_OX_QUIZ_OPEN", 1, (e) => {
+          this.LoggedData["gmevents"]["questions"].push(e)
         })
 
-        this.installHook(mod, "S_GMEVENT_OX_QUIZ_RESULT", 1, (event) => {
-          this.LoggedData["gmevents"]["answers"].push(event)
+        this.installHook(mod, "S_GMEVENT_OX_QUIZ_RESULT", 1, (e) => {
+          this.LoggedData["gmevents"]["answers"].push(e)
         })
 
-        this.installHook(mod, "S_GMEVENT_RECV_REWARD", 2, (event) => {
-          event.money = event.money.toString()
-          this.LoggedData["gmevents"]["rewards"].push(event)
+        this.installHook(mod, "S_GMEVENT_RECV_REWARD", 2, (e) => {
+          e.money = e.money.toString()
+          this.LoggedData["gmevents"]["rewards"].push(e)
         })
       }
     }
@@ -655,12 +613,6 @@ class DataLogger {
         Items: [],
       },
       userlist: [],
-      carddata: {
-        playername: [],
-        maxcard: null,
-        actualcard: null,
-        card: [],
-      },
       dungeon: {
         piddungeon: [],
         dungeoncont: [],
@@ -705,6 +657,12 @@ class DataLogger {
         pocket3: [],
       },
       brokerlist: [],
+      carddata: {
+        playername: [],
+        maxcard: null,
+        actualcard: null,
+        card: [],
+      },
       lootboxes: [],
       gacha: [],
       gmevents: {
@@ -750,10 +708,12 @@ class DataLogger {
       this.LoggedData["username"] = contributor_id
       this.LoggedData["platform"] = this.mod.platform
       let compressed_log = zlib.gzipSync(JSON.stringify(this.LoggedData, null))
+      //let compressed_card = zlib.gzipSync(JSON.stringify(this.Cards, null))
       //let noncompressed_log = JSON.stringify(this.LoggedData);
       let log_folder = path.join(__dirname, "logs")
       this.tryUploadSession(
         compressed_log,
+        //compressed_card,
         //noncompressed_log,
         (LogData, ServerIndex) => {
           console.log(`[DataLogger] Log successfully upload - Server ${ServerIndex.toString()} -`)
